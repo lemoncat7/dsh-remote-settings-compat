@@ -1,0 +1,23 @@
+# DSH 0.1.1 creates the settings mirror in memory mode on non-loopback pages.
+# Recreate Connection and ui-settings after this package so one trustedOrigins
+# list drives both the Host API fence and the browser settings mirror.
+- id: connection
+  disabled: true
+
+- id: ui-settings
+  disabled: true
+
+- insert:
+    - id: remote-settings-compat
+      name: '@lemoncat7/dsh-remote-settings-compat'
+      config:
+        trustedOrigins: []
+
+    - id: connection-after-remote-compat
+      name: '@lemoncat7/dsh-remote-settings-compat/connection'
+
+    - id: remote-settings-rpc
+      name: '@lemoncat7/dsh-remote-settings-compat/rpc'
+
+    - id: ui-settings-after-remote-compat
+      name: '@deepseek-ai/dsh-client-ui-settings'
