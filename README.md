@@ -2,6 +2,49 @@
 
 为 DeepSeek Harness Web 提供可配置、可卸载的远程设置兼容层。只需维护一份 `trustedOrigins`，明确列出的浏览器 Origin 即可使用 DSH 原生设置、模型和凭证界面。
 
+## 安装
+
+### 从 GitHub Release 安装（推荐）
+
+下载当前预发布包：
+
+```bash
+curl -fL \
+  https://github.com/lemoncat7/dsh-remote-settings-compat/releases/download/v0.2.0-alpha.11/lemoncat7-dsh-remote-settings-compat-0.2.0-alpha.11.tgz \
+  -o lemoncat7-dsh-remote-settings-compat-0.2.0-alpha.11.tgz
+```
+
+使用 DSH CLI 安装到 Web profile：
+
+```bash
+dsh plugin --profile web add \
+  ./lemoncat7-dsh-remote-settings-compat-0.2.0-alpha.11.tgz
+```
+
+安装后重启 DSH，再通过本机地址进入 **Settings → Plugins → 远程设置兼容** 配置可信 Origin。
+
+Docker Compose 部署可以先把安装包复制进正在运行的 DSH 服务，再调用相同的插件命令：
+
+```bash
+docker compose cp \
+  ./lemoncat7-dsh-remote-settings-compat-0.2.0-alpha.11.tgz \
+  dsh:/tmp/dsh-remote-settings-compat.tgz
+
+docker compose exec dsh \
+  dsh plugin --profile web add /tmp/dsh-remote-settings-compat.tgz
+
+docker compose restart dsh
+```
+
+升级时先移除旧版本，再安装新的 `.tgz`：
+
+```bash
+dsh plugin --profile web remove @lemoncat7/dsh-remote-settings-compat
+dsh plugin --profile web add ./lemoncat7-dsh-remote-settings-compat-0.2.0-alpha.11.tgz
+```
+
+卸载后重启 DSH 即可恢复官方行为。
+
 ## 配置
 
 安装后可在 **Settings → Plugins → 远程设置兼容** 中维护可信地址。每行填写一个完整 Origin，保存后刷新页面生效。
@@ -55,3 +98,5 @@ docker build --output type=local,dest=dist .
 ```
 
 构建会在 Node 24 镜像中运行测试，并在 `dist/` 生成可安装的 `.tgz` 包。
+
+GitHub Release 中提供的安装包也是通过同一 Docker 构建流程生成。
