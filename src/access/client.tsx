@@ -51,9 +51,7 @@ export function apply(ctx: RemoteAccessUiContext): void {
   ctx.effect(installStyles, 'remote-access: settings styles')
   ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
     name: 'settings.plugin.item',
-    key: 'remote-access',
-    id: 'remote-access',
-    order: 30,
+    key: REMOTE_SETTINGS_NAMESPACE,
   }, () => <RemoteAccessCard gateScope={gateScope} remoteScope={remoteScope} />))
 }
 

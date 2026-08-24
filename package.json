@@ -1,6 +1,6 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.3.0-alpha.1",
+  "version": "0.3.0-alpha.2",
   "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "keywords": [
     "deepseek-harness",
