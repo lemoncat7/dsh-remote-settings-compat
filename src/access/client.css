@@ -1,0 +1,376 @@
+.dsh-access-gate-card {
+  --gate-control-height: 36px;
+  --gate-radius: 10px;
+  --gate-gap: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .16));
+  border-radius: 12px;
+  background: var(--dsw-alias-background-secondary, rgba(128, 128, 128, .045));
+  color: var(--dsw-alias-label-primary, #303238);
+}
+
+.dsh-access-gate-card *,
+.dsh-access-gate-card *::before,
+.dsh-access-gate-card *::after {
+  box-sizing: border-box;
+}
+
+.dsh-access-gate-header {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dsh-access-gate-header:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(128, 128, 128, .06));
+}
+
+.dsh-access-gate-header:focus-visible,
+.dsh-access-gate-card button:focus-visible,
+.dsh-access-gate-card input:focus-visible,
+.dsh-access-gate-card select:focus-visible,
+.dsh-access-gate-card textarea:focus-visible {
+  outline: 2px solid var(--dsw-alias-interactive-primary, #547d78);
+  outline-offset: 2px;
+}
+
+.dsh-access-gate-header > span:first-child,
+.dsh-access-gate-section-title > span,
+.dsh-access-gate-toggle-row > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.dsh-access-gate-header strong {
+  font-size: 15px;
+  font-weight: 620;
+  line-height: 1.35;
+}
+
+.dsh-access-gate-header small,
+.dsh-access-gate-summary,
+.dsh-access-gate-field small,
+.dsh-access-gate-section-title small,
+.dsh-access-gate-toggle-row small {
+  color: var(--dsw-alias-label-secondary, #68686f);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dsh-access-gate-summary {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.dsh-access-gate-summary i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary, #9a9a9f);
+}
+
+.dsh-access-gate-summary i[data-running="true"] {
+  background: var(--dsw-alias-status-success, #4d8a72);
+}
+
+.dsh-access-gate-body {
+  padding: 0 14px 14px;
+  display: grid;
+  gap: var(--gate-gap);
+}
+
+.dsh-access-gate-body section {
+  min-width: 0;
+  display: grid;
+  gap: var(--gate-gap);
+  padding: 14px;
+  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .14));
+  border-radius: 11px;
+  background: var(--dsw-alias-background-primary, rgba(255, 255, 255, .5));
+}
+
+.dsh-access-gate-section-title {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dsh-access-gate-section-title strong {
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.35;
+}
+
+.dsh-access-gate-warning {
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid rgba(162, 115, 45, .18);
+  border-radius: var(--gate-radius);
+  background: rgba(181, 137, 68, .07);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.dsh-access-gate-warning span {
+  color: var(--dsw-alias-label-secondary, #68686f);
+}
+
+.dsh-access-gate-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+}
+
+.dsh-access-gate-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dsh-access-gate-field {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: 6px;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.45;
+}
+
+.dsh-access-gate-field > span {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.dsh-access-gate-field input,
+.dsh-access-gate-field select,
+.dsh-access-gate-field textarea {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--dsw-alias-border-primary, rgba(100, 104, 110, .22));
+  border-radius: 9px;
+  background: var(--dsw-alias-background-primary, #fff);
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.dsh-access-gate-field input,
+.dsh-access-gate-field select {
+  height: var(--gate-control-height);
+  padding: 0 10px;
+}
+
+.dsh-access-gate-field select {
+  padding-right: 28px;
+}
+
+.dsh-access-gate-field textarea {
+  min-height: 76px;
+  padding: 9px 10px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dsh-access-gate-field input:focus,
+.dsh-access-gate-field select:focus,
+.dsh-access-gate-field textarea:focus {
+  border-color: var(--dsw-alias-interactive-primary, #547d78);
+  box-shadow: 0 0 0 2px rgba(84, 125, 120, .1);
+}
+
+.dsh-access-gate-field input:disabled,
+.dsh-access-gate-field select:disabled,
+.dsh-access-gate-field textarea:disabled {
+  cursor: default;
+  opacity: .55;
+}
+
+.dsh-access-gate-toggle-row {
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .13));
+  border-radius: 9px;
+  background: var(--dsw-alias-background-secondary, rgba(128, 128, 128, .035));
+}
+
+.dsh-access-gate-toggle-row.is-compact {
+  min-height: 60px;
+  align-self: end;
+}
+
+.dsh-access-gate-toggle-row strong {
+  font-size: 12px;
+  font-weight: 580;
+  line-height: 1.35;
+}
+
+.dsh-access-gate-switch {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 38px;
+  display: block;
+}
+
+.dsh-access-gate-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.dsh-access-gate-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(120, 120, 128, .24);
+  transition: background 160ms ease;
+}
+
+.dsh-access-gate-switch span::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  top: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .17);
+  transition: transform 160ms ease;
+}
+
+.dsh-access-gate-switch input:checked + span {
+  background: var(--dsw-alias-interactive-primary, #547d78);
+}
+
+.dsh-access-gate-switch input:checked + span::after {
+  transform: translateX(16px);
+}
+
+.dsh-access-gate-switch input:focus-visible + span {
+  outline: 2px solid var(--dsw-alias-interactive-primary, #547d78);
+  outline-offset: 2px;
+}
+
+.dsh-access-gate-switch input:disabled + span {
+  opacity: .48;
+}
+
+.dsh-access-gate-actions,
+.dsh-access-gate-savebar {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dsh-access-gate-actions button,
+.dsh-access-gate-savebar button {
+  min-width: 92px;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-primary, rgba(100, 104, 110, .2));
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dsh-access-gate-actions button.is-primary,
+.dsh-access-gate-savebar button.is-primary {
+  border-color: transparent;
+  background: var(--dsw-alias-interactive-primary, #547d78);
+  color: #fff;
+}
+
+.dsh-access-gate-actions button:disabled,
+.dsh-access-gate-savebar button:disabled {
+  cursor: default;
+  opacity: .45;
+}
+
+.dsh-access-gate-savebar {
+  padding: 4px 0 0;
+}
+
+.dsh-access-gate-savebar > span {
+  margin-right: auto;
+  color: var(--dsw-alias-label-secondary, #68686f);
+  font-size: 12px;
+}
+
+.dsh-access-gate-message {
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dsh-access-gate-message[data-kind="error"] {
+  color: var(--dsw-alias-status-error, #b42318);
+  background: rgba(180, 35, 24, .065);
+}
+
+.dsh-access-gate-message[data-kind="warning"] {
+  color: #7a5a27;
+  background: rgba(181, 137, 68, .08);
+}
+
+.dsh-access-gate-message[data-kind="success"] {
+  color: var(--dsw-alias-status-success, #34745e);
+  background: rgba(52, 116, 94, .07);
+}
+
+@media (max-width: 720px) {
+  .dsh-access-gate-grid,
+  .dsh-access-gate-grid--three {
+    grid-template-columns: 1fr;
+  }
+
+  .dsh-access-gate-summary {
+    display: none;
+  }
+
+  .dsh-access-gate-body section {
+    padding: 12px;
+  }
+
+  .dsh-access-gate-toggle-row.is-compact {
+    min-height: 52px;
+  }
+}

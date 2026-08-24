@@ -7,10 +7,7 @@ import {
   readTrustedOrigins,
   type ConnectionLike,
 } from './client-core.js'
-import {
-  registerRemoteSettingsCard,
-  type RemoteSettingsUiContext,
-} from './client-settings-card.js'
+import { apply as applyRemoteAccessSettings, type RemoteAccessUiContext } from './access/client.js'
 
 interface ClientContextLike {
   inject(names: string[], callback: (ctx: unknown) => void): unknown
@@ -50,6 +47,6 @@ export function apply(ctx: ClientContextLike): void {
   })
 
   ctx.inject(['slots', 'settingsScope'], injected => {
-    registerRemoteSettingsCard(injected as RemoteSettingsUiContext)
+    applyRemoteAccessSettings(injected as RemoteAccessUiContext)
   })
 }

@@ -1,13 +1,16 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.2.0-alpha.11",
-  "description": "Allow explicitly trusted browser origins to use DSH's native settings UI",
+  "version": "0.3.0-alpha.1",
+  "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "keywords": [
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
     "remote-settings",
-    "trusted-origin"
+    "trusted-origin",
+    "authentication",
+    "password-gate",
+    "reverse-proxy"
   ],
   "license": "MIT",
   "type": "module",
@@ -28,6 +31,10 @@
     "./rpc": {
       "types": "./lib/rpc.d.ts",
       "default": "./lib/rpc.js"
+    },
+    "./access": {
+      "types": "./lib/access/index.d.ts",
+      "default": "./lib/access/index.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
@@ -62,11 +69,14 @@
   },
   "dependencies": {
     "@deepseek-ai/dsh-client-connection": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
     "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "http-proxy": "^1.18.1"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
+    "@types/http-proxy": "^1.17.16",
     "react": "^18.3.1"
   },
   "devDependencies": {

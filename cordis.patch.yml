@@ -19,5 +19,22 @@
     - id: remote-settings-rpc
       name: '@lemoncat7/dsh-remote-settings-compat/rpc'
 
+    - id: remote-access-gate
+      name: '@lemoncat7/dsh-remote-settings-compat/access'
+      config:
+        enabled: false
+        listenHost: 127.0.0.1
+        listenPort: 3081
+        secureCookies: true
+        publicOrigins: []
+        trustedProxyAddresses: []
+        machineBearerPrefixes:
+          - /knowledge-api/v1
+        sessionTtlMinutes: 720
+        idleTimeoutMinutes: 60
+        maxFailedAttempts: 5
+        lockoutMinutes: 15
+        bindSessionToIp: false
+
     - id: ui-settings-after-remote-compat
       name: '@deepseek-ai/dsh-client-ui-settings'
