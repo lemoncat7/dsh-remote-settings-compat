@@ -3,12 +3,16 @@
   --gate-radius: 10px;
   --gate-gap: 12px;
   box-sizing: border-box;
+  list-style: none;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .16));
+  border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
-  background: var(--dsw-alias-background-secondary, rgba(128, 128, 128, .045));
+  background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-primary, #303238);
+  transition: border-color .16s, background .16s;
 }
+.dsh-access-gate-card:hover { border-color: var(--dsw-alias-label-dimmed); }
+.dsh-access-gate-card.is-open { border-color: var(--dsw-alias-label-dimmed); background: var(--dsw-alias-bg-layer-2); }
 
 .dsh-access-gate-card *,
 .dsh-access-gate-card *::before,
@@ -16,30 +20,16 @@
   box-sizing: border-box;
 }
 
-.dsh-access-gate-header {
-  width: 100%;
-  min-height: 64px;
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
+.dsh-access-gate-header { appearance: none; display: flex; width: 100%; align-items: center; gap: 12px; padding: 14px 16px; border: 0; border-radius: 12px; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
 
-.dsh-access-gate-header:hover {
-  background: var(--dsw-alias-interactive-bg-hover, rgba(128, 128, 128, .06));
+.dsh-access-gate-header:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: -2px;
 }
-
-.dsh-access-gate-header:focus-visible,
-.dsh-access-gate-card button:focus-visible,
-.dsh-access-gate-card input:focus-visible,
-.dsh-access-gate-card select:focus-visible,
-.dsh-access-gate-card textarea:focus-visible {
+.dsh-access-gate-body button:focus-visible,
+.dsh-access-gate-body input:focus-visible,
+.dsh-access-gate-body select:focus-visible,
+.dsh-access-gate-body textarea:focus-visible {
   outline: 2px solid var(--dsw-alias-interactive-primary, #547d78);
   outline-offset: 2px;
 }
@@ -51,14 +41,10 @@
   display: grid;
   gap: 3px;
 }
+.dsh-access-gate-header > span:first-child { display: flex; flex: 1; flex-direction: column; gap: 4px; }
 
-.dsh-access-gate-header strong {
-  font-size: 15px;
-  font-weight: 620;
-  line-height: 1.35;
-}
-
-.dsh-access-gate-header small,
+.dsh-access-gate-header strong { font-size: 15px; font-weight: 600; line-height: 1.4; }
+.dsh-access-gate-header small { color: var(--dsw-alias-label-tertiary); font-size: 13px; line-height: 1.5; }
 .dsh-access-gate-summary,
 .dsh-access-gate-field small,
 .dsh-access-gate-section-title small,
@@ -69,29 +55,18 @@
   line-height: 1.5;
 }
 
-.dsh-access-gate-summary {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-
-.dsh-access-gate-summary i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--dsw-alias-label-tertiary, #9a9a9f);
-}
-
-.dsh-access-gate-summary i[data-running="true"] {
-  background: var(--dsw-alias-status-success, #4d8a72);
-}
+.dsh-access-gate-summary { display: flex; flex: none; align-items: center; gap: 8px; font-size: 12px; white-space: nowrap; }
+.dsh-access-gate-summary > i { width: 7px; height: 7px; border-radius: 50%; background: var(--dsw-alias-label-tertiary, #9a9a9f); }
+.dsh-access-gate-summary > i[data-running="true"] { background: var(--dsw-alias-status-success, #4d8a72); }
+.dsh-access-gate-summary > b { width: 8px; height: 8px; margin-left: 1px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); transition: transform 160ms ease; }
+.dsh-access-gate-card.is-open .dsh-access-gate-summary > b { transform: rotate(225deg); }
 
 .dsh-access-gate-body {
-  padding: 0 14px 14px;
   display: grid;
   gap: var(--gate-gap);
+  margin: 0 16px;
+  padding: 12px 0 8px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
 }
 
 .dsh-access-gate-body section {
@@ -362,9 +337,7 @@
     grid-template-columns: 1fr;
   }
 
-  .dsh-access-gate-summary {
-    display: none;
-  }
+  .dsh-access-gate-summary { font-size: 0; }
 
   .dsh-access-gate-body section {
     padding: 12px;
@@ -373,4 +346,10 @@
   .dsh-access-gate-toggle-row.is-compact {
     min-height: 52px;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsh-access-gate-card,
+  .dsh-access-gate-header,
+  .dsh-access-gate-summary > b { transition: none; }
 }

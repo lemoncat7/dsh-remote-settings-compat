@@ -166,10 +166,10 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
 
   const summary = loadingStatus ? '检测中' : status?.gatewayRunning ? `运行于 ${status.listenPort}` : draft.enabled ? '等待重启' : '未启用'
 
-  return <li className="dsh-access-gate-card">
+  return <li className={`dsh-access-gate-card${open ? ' is-open' : ''}`}>
     <button type="button" className="dsh-access-gate-header" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
       <span><strong>远程访问</strong><small>可信远程设置、密码门禁与机器 API 的统一入口</small></span>
-      <span className="dsh-access-gate-summary"><i data-running={status?.gatewayRunning ? 'true' : 'false'} />{summary} · {open ? '收起' : '设置'}</span>
+      <span className="dsh-access-gate-summary"><i data-running={status?.gatewayRunning ? 'true' : 'false'} />{summary}<b aria-hidden="true" /></span>
     </button>
     {open && <div className="dsh-access-gate-body">
       <div className="dsh-access-gate-warning"><strong>部署边界</strong><span>对外反向代理应指向门禁端口；DSH 原端口必须只允许可信主机访问，否则可以绕过密码。</span></div>
