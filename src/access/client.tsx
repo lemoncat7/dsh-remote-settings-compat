@@ -7,6 +7,7 @@ import { REMOTE_SETTINGS_NAMESPACE } from '../shared.js'
 const PLUGIN_ID = '@lemoncat7/dsh-remote-settings-compat'
 const NAMESPACE = 'dsh-access-gate'
 const ADMIN_PREFIX = '/access-gate-admin/v1'
+const DIAGNOSTICS_PATH = '/api/remote-access-diagnostics/v1/request'
 const STYLE_ID = `${PLUGIN_ID}/remote-access-settings`
 
 interface SettingsSnapshot<T> {
@@ -34,6 +35,7 @@ export interface RemoteAccessUiContext {
 
 interface GateStatus {
   configured: boolean
+  credentialStoreWritable: boolean
   gatewayEnabled: boolean
   gatewayRunning: boolean
   listenHost: string
@@ -41,6 +43,36 @@ interface GateStatus {
   upstreamHost: string
   upstreamPort: number
   activeSessions: number
+  trustedOriginCount: number
+  originSource: 'trustedOrigins' | 'legacy-publicOrigins' | 'none'
+  viaGateway: boolean
+  entry: 'access-gate' | 'raw-upstream'
+  gatewayStats: {
+    requestCount: number
+    webSocketCount: number
+    lastRequestAt?: number
+  }
+  rawUpstreamExposurePossible: boolean
+}
+
+interface RequestDiagnostics {
+  browserOrigin?: string
+  receivedOrigin?: string
+  receivedHost?: string
+  forwardedProto?: string
+  forwardedPort?: string
+  viaGateway: boolean
+  trustedOriginMatched: boolean
+  originPreserved: boolean
+  authorityPreserved: boolean
+  secureCookieTransport: boolean
+  entry: 'access-gate' | 'raw-upstream'
+}
+
+interface DiagnosticIssue {
+  severity: 'danger' | 'warning'
+  title: string
+  detail: string
 }
 
 export const inject = ['slots', 'settingsScope']
@@ -63,6 +95,7 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Config>(() => config ?? defaultConfig())
   const [status, setStatus] = useState<GateStatus>()
+  const [diagnostics, setDiagnostics] = useState<RequestDiagnostics>()
   const [loadingStatus, setLoadingStatus] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ kind: 'error' | 'success'; text: string }>()
@@ -73,16 +106,21 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
 
   useEffect(() => {
     if (config === undefined || saving) return
-    const publicOrigins = config.publicOrigins.length > 0
-      ? config.publicOrigins
-      : remoteConfig?.trustedOrigins ?? []
+    const publicOrigins = (remoteConfig?.trustedOrigins.length ?? 0) > 0
+      ? remoteConfig?.trustedOrigins ?? []
+      : config.publicOrigins
     setDraft({ ...config, publicOrigins })
   }, [config, remoteConfig, saving])
 
   const reloadStatus = useCallback(async () => {
     setLoadingStatus(true)
     try {
-      setStatus(await adminRequest<GateStatus>('GET', 'status'))
+      const [nextStatus, nextDiagnostics] = await Promise.all([
+        adminRequest<GateStatus>('GET', 'status'),
+        diagnosticsRequest(),
+      ])
+      setStatus(nextStatus)
+      setDiagnostics(nextDiagnostics)
     } catch (error) {
       setMessage({ kind: 'error', text: errorMessage(error) })
     } finally {
@@ -99,10 +137,12 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
   const passwordError = password.length > 0 && password.length < 6
     ? '新密码至少需要 6 个字符。'
     : password !== confirmPassword ? '两次输入的密码不一致。' : undefined
-  const gateDirty = config !== undefined && JSON.stringify(config) !== JSON.stringify(draft)
+  const gateFields = (Object.keys(draft) as Array<keyof Config>).filter(field => field !== 'publicOrigins')
+  const gateDirty = config !== undefined && gateFields.some(field => JSON.stringify(config[field]) !== JSON.stringify(draft[field]))
   const remoteDirty = remoteConfig !== undefined && JSON.stringify(remoteConfig.trustedOrigins) !== JSON.stringify(draft.publicOrigins)
-  const dirty = gateDirty || remoteDirty
-  const writable = gateSnapshot.writable && remoteSnapshot.writable
+  const migrationPending = (config?.publicOrigins.length ?? 0) > 0
+  const dirty = gateDirty || remoteDirty || migrationPending
+  const writable = (!(gateDirty || migrationPending) || gateSnapshot.writable) && (!remoteDirty || remoteSnapshot.writable)
   const dockerLoopbackWarning = draft.enabled
     && status?.upstreamHost === '0.0.0.0'
     && draft.listenHost === '127.0.0.1'
@@ -117,9 +157,10 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
     setSaving(true)
     setMessage(undefined)
     try {
-      const changed = (Object.keys(draft) as Array<keyof Config>).filter(field => JSON.stringify(draft[field]) !== JSON.stringify(config?.[field]))
-      for (const field of changed) await gateScope.set(field, draft[field])
       if (remoteDirty) await remoteScope.set('trustedOrigins', draft.publicOrigins)
+      const changed = gateFields.filter(field => JSON.stringify(draft[field]) !== JSON.stringify(config?.[field]))
+      for (const field of changed) await gateScope.set(field, draft[field])
+      if (migrationPending) await gateScope.set('publicOrigins', [])
       setMessage({ kind: 'success', text: '远程访问配置已保存。可信地址立即同步；网关监听设置在重启 DSH 后生效。' })
     } catch (error) {
       setMessage({ kind: 'error', text: errorMessage(error) })
@@ -164,7 +205,8 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
     }
   }
 
-  const summary = loadingStatus ? '检测中' : status?.gatewayRunning ? `运行于 ${status.listenPort}` : draft.enabled ? '等待重启' : '未启用'
+  const diagnosticIssues = diagnostics === undefined || status === undefined ? [] : deploymentIssues(status, diagnostics)
+  const summary = loadingStatus ? '检测中' : diagnosticIssues.some(issue => issue.severity === 'danger') ? '部署异常' : status?.gatewayRunning ? `运行于 ${status.listenPort}` : draft.enabled ? '等待重启' : '未启用'
 
   return <li className={`dsh-access-gate-card${open ? ' is-open' : ''}`}>
     <button type="button" className="dsh-access-gate-header" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
@@ -174,6 +216,8 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
     {open && <div className="dsh-access-gate-body">
       <div className="dsh-access-gate-warning"><strong>部署边界</strong><span>对外反向代理应指向门禁端口；DSH 原端口必须只允许可信主机访问，否则可以绕过密码。</span></div>
 
+      <DeploymentDiagnostics status={status} diagnostics={diagnostics} issues={diagnosticIssues} loading={loadingStatus} onReload={() => { void reloadStatus() }} />
+
       {gateSnapshot.status === 'unavailable' || remoteSnapshot.status === 'unavailable' ? <p className="dsh-access-gate-message" data-kind="error">当前浏览器没有远程访问设置写入权限。</p> : <>
         <section>
           <div className="dsh-access-gate-section-title"><span><strong>可信访问与网关</strong><small>同一地址列表同时控制登录来源和 DSH 官方设置权限</small></span><Switch ariaLabel="启用访问密码门禁" checked={draft.enabled} disabled={!writable} onChange={value => { edit('enabled', value) }} /></div>
@@ -181,7 +225,7 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
             <Field label="监听地址"><select value={draft.listenHost} disabled={!writable} onChange={event => { edit('listenHost', event.target.value as Config['listenHost']) }}><option value="127.0.0.1">127.0.0.1（同机反代）</option><option value="0.0.0.0">0.0.0.0（局域网/容器）</option></select></Field>
             <Field label="门禁端口"><input type="number" min={1} max={65535} value={draft.listenPort} disabled={!writable} onChange={event => { edit('listenPort', Number(event.target.value)) }} /></Field>
           </div>
-          <Field label="公开可信 Origin" help="每行一个完整地址，例如 https://dsh.example.com:1443；同时用于登录校验与远程模型、插件设置权限。"><textarea value={originsText} placeholder="https://dsh.example.com:1443" disabled={!writable} onChange={event => { edit('publicOrigins', lines(event.target.value)) }} /></Field>
+          <Field label="公开可信 Origin" help="这是唯一权威地址列表：同时用于登录校验与远程设置权限。每行一个完整 Origin，非默认端口必须保留端口。"><textarea value={originsText} placeholder="https://dsh.example.com:1443" disabled={!remoteSnapshot.writable} onChange={event => { edit('publicOrigins', lines(event.target.value)) }} /></Field>
           <ToggleRow label="仅 HTTPS Cookie" help="公开部署必须开启；仅本机 HTTP 测试时关闭。" checked={draft.secureCookies} disabled={!writable} onChange={value => { edit('secureCookies', value) }} />
           {dockerLoopbackWarning && <p className="dsh-access-gate-message" data-kind="warning">当前是 Docker 部署，监听 127.0.0.1 只能在容器内部访问。请改为 0.0.0.0，并填写公开 Origin。</p>}
         </section>
@@ -191,6 +235,8 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
           <Field label="机器 Bearer API 前缀" help="默认只放行 Knowledge API。不要填写 /api、/assets 等宽泛路径。"><textarea value={prefixesText} disabled={!writable} onChange={event => { edit('machineBearerPrefixes', lines(event.target.value)) }} /></Field>
           <Field label="可信反向代理 IP" help="每行一个精确 IP；只有这些来源的 X-Real-IP 会被信任。"><textarea value={proxiesText} placeholder="127.0.0.1" disabled={!writable} onChange={event => { edit('trustedProxyAddresses', lines(event.target.value)) }} /></Field>
         </section>
+
+        {!status?.gatewayRunning && <FirstRunChecklist configured={status?.configured === true} />}
 
         <section>
           <div className="dsh-access-gate-section-title"><span><strong>会话安全</strong><small>{status ? `${status.activeSessions} 个活动会话` : '状态读取中'}</small></span></div>
@@ -226,6 +272,63 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
       </>}
     </div>}
   </li>
+}
+
+function DeploymentDiagnostics({ status, diagnostics, issues, loading, onReload }: {
+  status: GateStatus | undefined
+  diagnostics: RequestDiagnostics | undefined
+  issues: DiagnosticIssue[]
+  loading: boolean
+  onReload(): void
+}) {
+  const ready = status !== undefined && diagnostics !== undefined
+  const dangerCount = issues.filter(issue => issue.severity === 'danger').length
+  const healthy = ready && dangerCount === 0
+  return <section className="dsh-access-gate-diagnostics" aria-label="部署自检">
+    <div className="dsh-access-gate-diagnostics-head">
+      <span><strong>部署自检</strong><small>{loading ? '正在检查当前入口…' : dangerCount > 0 ? `${dangerCount} 项需要处理` : issues.length > 0 ? `当前入口正常 · ${issues.length} 项边界待确认` : '当前入口与反向代理正常'}</small></span>
+      <button type="button" disabled={loading} onClick={onReload}>{loading ? '检测中…' : '重新检测'}</button>
+    </div>
+    {ready && <div className="dsh-access-gate-diagnostic-facts">
+      <DiagnosticFact label="当前入口" value={diagnostics.entry === 'access-gate' ? `密码门禁 · ${status.listenPort}` : `原始 DSH · ${status.upstreamPort}`} ok={diagnostics.viaGateway} />
+      <DiagnosticFact label="Host 与端口" value={diagnostics.receivedHost ?? '未收到'} ok={diagnostics.authorityPreserved} />
+      <DiagnosticFact label="Origin" value={diagnostics.receivedOrigin ?? '未收到'} ok={diagnostics.originPreserved && diagnostics.trustedOriginMatched} />
+      <DiagnosticFact label="Credentials" value={status.credentialStoreWritable ? '可写' : '不可写'} ok={status.credentialStoreWritable} />
+    </div>}
+    {!loading && issues.length > 0 && <div className="dsh-access-gate-diagnostic-issues" role="status">
+      {issues.map(issue => <div key={`${issue.title}:${issue.detail}`} data-severity={issue.severity}><i aria-hidden="true" /><span><strong>{issue.title}</strong><small>{issue.detail}</small></span></div>)}
+    </div>}
+  </section>
+}
+
+function DiagnosticFact({ label, value, ok }: { label: string; value: string; ok: boolean }) {
+  return <span className="dsh-access-gate-diagnostic-fact" data-ok={ok ? 'true' : 'false'}><small>{label}</small><strong title={value}>{value}</strong></span>
+}
+
+function FirstRunChecklist({ configured }: { configured: boolean }) {
+  return <details className="dsh-access-gate-checklist">
+    <summary><span><strong>首次启用顺序</strong><small>按阶段切换，避免把自己锁在门外</small></span><i aria-hidden="true" /></summary>
+    <ol>
+      <li>填写完整的可信 Origin，启用门禁并保存。</li>
+      <li>{configured ? '密码已初始化。' : '使用本次启动日志中的令牌初始化密码。'}</li>
+      <li>发布并重启 3081，确认门禁健康。</li>
+      <li>把反向代理整体从 3080 切到 3081，不要单独分流 /api/。</li>
+      <li>最后移除 3080 的对外发布，再运行部署自检。</li>
+    </ol>
+  </details>
+}
+
+function deploymentIssues(status: GateStatus, diagnostics: RequestDiagnostics): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = []
+  if (status.gatewayEnabled && !status.gatewayRunning) issues.push({ severity: 'danger', title: '门禁未运行', detail: '配置已启用但端口尚未监听，请查看启动日志并重启 DSH。' })
+  if (!diagnostics.viaGateway) issues.push({ severity: 'danger', title: '当前请求绕过了密码门禁', detail: `请把整个站点反代到 ${status.listenPort}，并停止对外发布 ${status.upstreamPort}。` })
+  if (status.rawUpstreamExposurePossible) issues.push({ severity: 'warning', title: '原始 DSH 监听在公开地址', detail: `${status.upstreamHost}:${status.upstreamPort} 可能成为绕过入口；Docker 请将宿主机发布收紧到 127.0.0.1。` })
+  if (!diagnostics.authorityPreserved) issues.push({ severity: 'danger', title: 'Host 端口丢失', detail: '反向代理必须使用 proxy_set_header Host $http_host，不能使用 $host。' })
+  if (!diagnostics.originPreserved) issues.push({ severity: 'danger', title: 'Origin 被覆盖或缺失', detail: '删除 proxy_set_header Origin 配置，让浏览器 Origin 原样传递。' })
+  else if (!diagnostics.trustedOriginMatched) issues.push({ severity: 'danger', title: 'Origin 未命中可信列表', detail: '把当前完整 Origin（含非默认端口）加入公开可信 Origin。' })
+  if (!diagnostics.secureCookieTransport) issues.push({ severity: 'danger', title: 'HTTPS Cookie 与 HTTP 入口冲突', detail: '公开入口请启用 HTTPS；仅本机 HTTP 测试时才关闭「仅 HTTPS Cookie」。' })
+  if (!status.credentialStoreWritable) issues.push({ severity: 'danger', title: 'Credentials 不可写', detail: '密码无法持久化；本地 Provider 请检查 .credentials.yaml 及其目录权限。' })
+  return issues
 }
 
 function Field({ label, help, children }: { label: string; help?: string; children: JSX.Element }) {
@@ -306,6 +409,17 @@ async function adminRequest<T = unknown>(method: string, path: string, body?: Re
   const value = await response.json().catch(() => ({})) as { error?: unknown }
   if (!response.ok) throw new Error(typeof value.error === 'string' ? value.error : `请求失败（HTTP ${response.status}）`)
   return value as T
+}
+
+async function diagnosticsRequest(): Promise<RequestDiagnostics> {
+  const response = await fetch(DIAGNOSTICS_PATH, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'x-dsh-browser-origin': location.origin },
+  })
+  const value = await response.json().catch(() => ({})) as { error?: unknown }
+  if (!response.ok) throw new Error(typeof value.error === 'string' ? value.error : `部署自检失败（HTTP ${response.status}）`)
+  return value as RequestDiagnostics
 }
 
 function errorMessage(error: unknown): string {

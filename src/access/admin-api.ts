@@ -27,6 +27,8 @@ export interface AdminRuntime {
   assertion: ProxyAssertion
   gateway: AccessGateway
   setupToken: string
+  trustedOrigins: readonly string[]
+  originSource(): 'trustedOrigins' | 'legacy-publicOrigins' | 'none'
 }
 
 export function registerAdminApi(runtime: AdminRuntime): () => void {
@@ -43,8 +45,11 @@ async function dispatch(runtime: AdminRuntime, req: IncomingMessage, res: Server
   const url = new URL(req.url ?? '/', 'http://dsh.internal')
   const relative = url.pathname.slice(ADMIN_PREFIX.length).replace(/^\/+|\/+$/gu, '')
   if (req.method === 'GET' && relative === 'status') {
+    const credential = await runtime.passwords.describe()
+    const viaGateway = runtime.assertion.verify(header(req, 'x-dsh-access-assertion'))
     return sendJson(res, 200, {
-      configured: await runtime.passwords.configured(),
+      configured: credential.configured,
+      credentialStoreWritable: credential.writable,
       gatewayEnabled: runtime.config.enabled,
       gatewayRunning: runtime.gateway.running,
       listenHost: runtime.config.listenHost,
@@ -52,6 +57,12 @@ async function dispatch(runtime: AdminRuntime, req: IncomingMessage, res: Server
       upstreamHost: runtime.webServer.host,
       upstreamPort: runtime.webServer.port,
       activeSessions: runtime.sessions.count(),
+      trustedOriginCount: runtime.trustedOrigins.length,
+      originSource: runtime.originSource(),
+      viaGateway,
+      entry: viaGateway ? 'access-gate' : 'raw-upstream',
+      gatewayStats: runtime.gateway.stats,
+      rawUpstreamExposurePossible: !isLoopbackHost(runtime.webServer.host),
     })
   }
   if (req.method === 'PUT' && relative === 'password') {
@@ -79,6 +90,10 @@ async function dispatch(runtime: AdminRuntime, req: IncomingMessage, res: Server
     return sendJson(res, 200, { ok: true })
   }
   sendJson(res, 404, { error: 'not found' })
+}
+
+function isLoopbackHost(value: string): boolean {
+  return value === '127.0.0.1' || value === '::1' || value === 'localhost'
 }
 
 function requireTrustedAdmin(runtime: AdminRuntime, req: IncomingMessage): void {

@@ -1,9 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveConfig } from '../lib/access/config.js'
+import { resolveAccessOrigins, resolveConfig } from '../lib/access/config.js'
+import { inspectRequest } from '../lib/access/diagnostics.js'
 import { PasswordStore, validatePassword } from '../lib/access/password.js'
 import { issueLoginCsrfToken, loginCsrfCookie, loginCsrfCookieName, verifyLoginCsrfToken } from '../lib/access/login-csrf.js'
-import { isMachineBearerRequest, requestFetchSite } from '../lib/access/security.js'
+import { isMachineBearerRequest, ProxyAssertion, requestFetchSite } from '../lib/access/security.js'
 import { SessionStore, expiredSessionCookie, sessionCookie, sessionCookieName } from '../lib/access/sessions.js'
 
 class MemoryCredentials {
@@ -85,5 +86,64 @@ test('only configured machine API prefixes accept bearer bypass', () => {
 
 test('unsafe broad machine prefixes are rejected', () => {
   assert.throws(() => resolveConfig({ machineBearerPrefixes: ['/api'] }), /too broad/u)
-  assert.throws(() => resolveConfig({ listenHost: '0.0.0.0', publicOrigins: [] }), /publicOrigins/u)
+})
+
+test('trusted origins are authoritative with a legacy migration fallback', () => {
+  assert.deepEqual(resolveAccessOrigins(
+    ['https://new.example.com:1443'],
+    ['https://legacy.example.com'],
+  ), ['https://new.example.com:1443'])
+  assert.deepEqual(resolveAccessOrigins([], ['https://legacy.example.com/']), ['https://legacy.example.com'])
+})
+
+test('deployment diagnostics detect gateway entry and preserved proxy headers', () => {
+  const assertion = new ProxyAssertion()
+  const config = resolveConfig({ secureCookies: true })
+  const request = {
+    headers: {
+      host: 'dsh.example.com:2439',
+      origin: 'https://dsh.example.com:2439',
+      'x-forwarded-proto': 'https',
+      'x-forwarded-port': '2439',
+      'x-dsh-browser-origin': 'https://dsh.example.com:2439',
+      'x-dsh-access-assertion': assertion.issue(),
+    },
+  }
+  assert.deepEqual(inspectRequest({
+    config,
+    assertion,
+    trustedOrigins: ['https://dsh.example.com:2439'],
+  }, request), {
+    browserOrigin: 'https://dsh.example.com:2439',
+    receivedOrigin: 'https://dsh.example.com:2439',
+    receivedHost: 'dsh.example.com:2439',
+    forwardedProto: 'https',
+    forwardedPort: '2439',
+    viaGateway: true,
+    trustedOriginMatched: true,
+    originPreserved: true,
+    authorityPreserved: true,
+    secureCookieTransport: true,
+    entry: 'access-gate',
+  })
+})
+
+test('deployment diagnostics detect $host port loss, Origin rewriting and raw entry', () => {
+  const assertion = new ProxyAssertion()
+  const result = inspectRequest({
+    config: resolveConfig({ secureCookies: true }),
+    assertion,
+    trustedOrigins: ['https://dsh.example.com:2439'],
+  }, {
+    headers: {
+      host: 'dsh.example.com',
+      origin: 'http://127.0.0.1:3080',
+      'x-dsh-browser-origin': 'https://dsh.example.com:2439',
+    },
+  })
+  assert.equal(result.authorityPreserved, false)
+  assert.equal(result.originPreserved, false)
+  assert.equal(result.trustedOriginMatched, false)
+  assert.equal(result.viaGateway, false)
+  assert.equal(result.entry, 'raw-upstream')
 })

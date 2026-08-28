@@ -20,7 +20,7 @@ export const ConfigSchema: Schema<Config> = Schema.object({
   listenHost: Schema.union(['127.0.0.1', '0.0.0.0']).default('127.0.0.1').description('网关监听地址。反向代理在同机时建议使用 127.0.0.1。'),
   listenPort: Schema.number().min(1).max(65535).default(3081).description('认证网关端口。不得与 DSH 原端口相同。'),
   secureCookies: Schema.boolean().default(true).description('仅通过 HTTPS 发送登录 Cookie；公开部署必须开启。'),
-  publicOrigins: Schema.array(Schema.string()).default([]).description('允许登录的完整公开 Origin，例如 https://dsh.example.com:1443。公开监听时至少填写一个。'),
+  publicOrigins: Schema.array(Schema.string()).default([]).description('旧版兼容字段。新版统一使用 remote-settings-compat.trustedOrigins，请在「远程访问」卡片中维护。'),
   trustedProxyAddresses: Schema.array(Schema.string()).default([]).description('可信反向代理的精确 IP；仅这些地址可提供真实客户端 IP。'),
   machineBearerPrefixes: Schema.array(Schema.string()).default(['/knowledge-api/v1']).description('允许携带 Bearer Token 独立鉴权的 API 前缀。'),
   sessionTtlMinutes: Schema.number().min(5).max(10080).default(720).description('登录会话最长有效时间（分钟）。'),
@@ -45,9 +45,6 @@ export function resolveConfig(input: Partial<Config>): Config {
     lockoutMinutes: integer(input.lockoutMinutes ?? 15, 'lockoutMinutes', 1, 1440),
     bindSessionToIp: input.bindSessionToIp ?? false,
   }
-  if (config.listenHost === '0.0.0.0' && config.publicOrigins.length === 0) {
-    throw new Error('publicOrigins must contain at least one exact origin when listenHost is 0.0.0.0')
-  }
   if (config.idleTimeoutMinutes > config.sessionTtlMinutes) {
     throw new Error('idleTimeoutMinutes must not exceed sessionTtlMinutes')
   }
@@ -67,6 +64,11 @@ export function normalizeOrigins(values: readonly string[]): string[] {
     normalized.add(url.origin)
   }
   return [...normalized]
+}
+
+/** Use the remote-settings namespace as the authority, with legacy gate data as a migration-only fallback. */
+export function resolveAccessOrigins(trustedOrigins: readonly string[], legacyPublicOrigins: readonly string[]): string[] {
+  return normalizeOrigins(trustedOrigins.length > 0 ? trustedOrigins : legacyPublicOrigins)
 }
 
 export function normalizePrefixes(values: readonly string[]): string[] {

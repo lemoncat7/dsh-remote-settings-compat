@@ -10,6 +10,7 @@
   background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-primary, #303238);
   transition: border-color .16s, background .16s;
+  font-family: var(--dsw-alias-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 .dsh-access-gate-card:hover { border-color: var(--dsw-alias-label-dimmed); }
 .dsh-access-gate-card.is-open { border-color: var(--dsw-alias-label-dimmed); background: var(--dsw-alias-bg-layer-2); }
@@ -76,7 +77,196 @@
   padding: 14px;
   border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .14));
   border-radius: 11px;
-  background: var(--dsw-alias-background-primary, rgba(255, 255, 255, .5));
+  background: var(--dsw-alias-background-primary, #fff);
+}
+
+.dsh-access-gate-diagnostics {
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.dsh-access-gate-diagnostics-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dsh-access-gate-diagnostics-head > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dsh-access-gate-diagnostics-head strong {
+  font-size: 13px;
+  font-weight: 620;
+  line-height: 1.4;
+}
+
+.dsh-access-gate-diagnostics-head small,
+.dsh-access-gate-diagnostic-fact small,
+.dsh-access-gate-diagnostic-issues small,
+.dsh-access-gate-checklist small {
+  color: var(--dsw-alias-label-secondary, #62656c);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.dsh-access-gate-diagnostics-head button {
+  flex: none;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 11px;
+  appearance: none;
+  border: 1px solid var(--dsw-alias-border-primary, #d6d8dc);
+  border-radius: 8px;
+  background: var(--dsw-alias-background-secondary, #f5f6f7);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dsh-access-gate-diagnostics-head button:hover:not(:disabled) {
+  border-color: var(--dsw-alias-label-secondary, #62656c);
+}
+
+.dsh-access-gate-diagnostics-head button:disabled {
+  cursor: default;
+  opacity: .48;
+}
+
+.dsh-access-gate-diagnostic-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-secondary, #e2e3e6);
+  border-radius: 9px;
+  background: var(--dsw-alias-border-secondary, #e2e3e6);
+}
+
+.dsh-access-gate-diagnostic-fact {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  background: var(--dsw-alias-background-secondary, #f6f7f8);
+}
+
+.dsh-access-gate-diagnostic-fact strong {
+  overflow: hidden;
+  color: var(--dsw-alias-status-error, #a7332d);
+  font-size: 12px;
+  font-weight: 580;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-access-gate-diagnostic-fact[data-ok="true"] strong {
+  color: var(--dsw-alias-status-success, #34745e);
+}
+
+.dsh-access-gate-diagnostic-issues {
+  display: grid;
+  gap: 6px;
+}
+
+.dsh-access-gate-diagnostic-issues > div {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid #ead3aa;
+  border-radius: 8px;
+  background: #fff8eb;
+}
+
+.dsh-access-gate-diagnostic-issues > div[data-severity="danger"] {
+  border-color: #efcac6;
+  background: #fff3f1;
+}
+
+.dsh-access-gate-diagnostic-issues i {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #b07a2b;
+}
+
+.dsh-access-gate-diagnostic-issues [data-severity="danger"] i {
+  background: var(--dsw-alias-status-error, #b42318);
+}
+
+.dsh-access-gate-diagnostic-issues span {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.dsh-access-gate-diagnostic-issues strong {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.45;
+}
+
+.dsh-access-gate-checklist {
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-secondary, #e2e3e6);
+  border-radius: 10px;
+  background: var(--dsw-alias-background-primary, #fff);
+}
+
+.dsh-access-gate-checklist summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.dsh-access-gate-checklist summary::-webkit-details-marker { display: none; }
+
+.dsh-access-gate-checklist summary > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dsh-access-gate-checklist summary strong {
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.4;
+}
+
+.dsh-access-gate-checklist summary > i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.dsh-access-gate-checklist[open] summary > i { transform: rotate(225deg); }
+
+.dsh-access-gate-checklist ol {
+  margin: 0;
+  padding: 0 18px 12px 34px;
+  color: var(--dsw-alias-label-secondary, #62656c);
+  font-size: 12px;
+  line-height: 1.65;
 }
 
 .dsh-access-gate-section-title {
@@ -150,6 +340,7 @@
   color: inherit;
   font: inherit;
   outline: none;
+  appearance: none;
 }
 
 .dsh-access-gate-field input,
@@ -160,6 +351,10 @@
 
 .dsh-access-gate-field select {
   padding-right: 28px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 15px, calc(100% - 10px) 15px;
+  background-repeat: no-repeat;
+  background-size: 4px 4px, 4px 4px;
 }
 
 .dsh-access-gate-field textarea {
@@ -283,6 +478,7 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+  appearance: none;
 }
 
 .dsh-access-gate-actions button.is-primary,
@@ -346,10 +542,15 @@
   .dsh-access-gate-toggle-row.is-compact {
     min-height: 52px;
   }
+
+  .dsh-access-gate-diagnostic-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .dsh-access-gate-card,
   .dsh-access-gate-header,
-  .dsh-access-gate-summary > b { transition: none; }
+  .dsh-access-gate-summary > b,
+  .dsh-access-gate-checklist summary > i { transition: none; }
 }

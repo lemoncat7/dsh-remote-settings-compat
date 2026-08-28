@@ -27,6 +27,11 @@ export class PasswordStore {
     return (await this.read()) !== undefined
   }
 
+  async describe(): Promise<{ configured: boolean; writable: boolean }> {
+    const info = await this.credentials.describeRecord(PASSWORD_KEY)
+    return { configured: info.configured, writable: info.writable }
+  }
+
   async set(password: string): Promise<void> {
     validatePassword(password)
     const salt = randomBytes(16)

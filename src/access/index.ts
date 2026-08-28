@@ -1,8 +1,10 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { CredentialProvider } from '@deepseek-ai/dsh-credentials'
 import { settingsNamespace, type SettingsProvider } from '@deepseek-ai/dsh-settings'
+import type { RemoteSettingsTrust } from '../index.js'
 import { registerAdminApi, createSetupToken } from './admin-api.js'
-import { ConfigSchema, resolveConfig, type Config as AccessGateConfig } from './config.js'
+import { ConfigSchema, resolveAccessOrigins, resolveConfig, type Config as AccessGateConfig } from './config.js'
+import { registerDiagnosticsApi } from './diagnostics.js'
 import { AccessGateway } from './gateway.js'
 import { PasswordStore } from './password.js'
 import { LoginLimiter, ProxyAssertion } from './security.js'
@@ -11,11 +13,12 @@ import { SessionStore } from './sessions.js'
 export const Config = ConfigSchema
 export type Config = AccessGateConfig
 export const name = 'dsh-access-gate'
-export const inject = ['credentials', 'settings', 'webServer']
+export const inject = ['credentials', 'settings', 'webServer', 'remoteSettingsTrust']
 
 interface RuntimeContext extends Context {
   credentials: CredentialProvider
   settings: SettingsProvider
+  remoteSettingsTrust: RemoteSettingsTrust
   webServer: {
     host: string
     port: number
@@ -34,7 +37,17 @@ export function apply(context: Context, base: AccessGateConfig): void {
     ConfigSchema,
     { base, applies: 'restart', validate: value => { resolveConfig(value) } },
   )
-  const config = resolveConfig(scope.get())
+  const storedConfig = resolveConfig(scope.get())
+  const config: AccessGateConfig = { ...storedConfig, publicOrigins: [] }
+  let legacyFallbackActive = ctx.remoteSettingsTrust.origins.length === 0 && storedConfig.publicOrigins.length > 0
+  const syncOrigins = (): void => {
+    const origins = resolveAccessOrigins(
+      ctx.remoteSettingsTrust.origins,
+      legacyFallbackActive ? storedConfig.publicOrigins : [],
+    )
+    config.publicOrigins.splice(0, config.publicOrigins.length, ...origins)
+  }
+  syncOrigins()
   if (config.listenPort === ctx.webServer.port) throw new Error('access gate listenPort must differ from the DSH upstream port')
 
   const passwords = new PasswordStore(ctx.credentials)
@@ -49,8 +62,31 @@ export function apply(context: Context, base: AccessGateConfig): void {
   const setupToken = createSetupToken()
 
   ctx.effect(
-    () => registerAdminApi({ config, webServer: ctx.webServer, passwords, sessions, assertion, gateway, setupToken }),
+    () => registerAdminApi({
+      config,
+      webServer: ctx.webServer,
+      passwords,
+      sessions,
+      assertion,
+      gateway,
+      setupToken,
+      trustedOrigins: config.publicOrigins,
+      originSource: () => ctx.remoteSettingsTrust.origins.length > 0
+        ? 'trustedOrigins'
+        : legacyFallbackActive ? 'legacy-publicOrigins' : 'none',
+    }),
     'dsh-access-gate: management API',
+  )
+  ctx.effect(
+    () => registerDiagnosticsApi({ config, webServer: ctx.webServer, assertion, trustedOrigins: config.publicOrigins }),
+    'dsh-access-gate: deployment diagnostics API',
+  )
+  ctx.effect(
+    () => ctx.remoteSettingsTrust.subscribe(() => {
+      legacyFallbackActive = false
+      syncOrigins()
+    }),
+    'dsh-access-gate: trusted origin synchronization',
   )
 
   ctx.effect(async () => {
@@ -65,9 +101,15 @@ export function apply(context: Context, base: AccessGateConfig): void {
     if (ctx.webServer.host !== '127.0.0.1') {
       ctx.logger.warn(`dsh-access-gate: DSH upstream listens on ${ctx.webServer.host}:${ctx.webServer.port}; do not expose that port outside the trusted host`)
     }
+    if (legacyFallbackActive) {
+      ctx.logger.warn('dsh-access-gate: using legacy publicOrigins fallback; save the Origin list in the Remote Access card to migrate it')
+    }
     if (!config.enabled) {
       ctx.logger.info('dsh-access-gate: disabled; configure it in DSH settings and restart')
       return () => Promise.resolve()
+    }
+    if (config.listenHost === '0.0.0.0' && config.publicOrigins.length === 0) {
+      throw new Error('trustedOrigins must contain at least one exact origin when the access gate listens on 0.0.0.0')
     }
     await gateway.start()
     return () => gateway.close()

@@ -15,9 +15,18 @@ export interface GatewayLogger {
   warn(message: string): void
 }
 
+export interface GatewayStats {
+  requestCount: number
+  webSocketCount: number
+  lastRequestAt?: number
+}
+
 export class AccessGateway {
   private readonly proxy = httpProxy.createProxyServer({ ws: true, xfwd: false, changeOrigin: false, ignorePath: false })
   private server: Server | undefined
+  private requestCount = 0
+  private webSocketCount = 0
+  private lastRequestAt: number | undefined
 
   constructor(
     private readonly config: Config,
@@ -50,6 +59,7 @@ export class AccessGateway {
       else socket.destroy()
     })
     server.on('upgrade', (req, socket, head) => {
+      this.observe(true)
       const ip = clientIp(req, this.config)
       const authenticated = this.sessions.authenticate(readCookie(req.headers.cookie, this.cookieName), ip)
       const machine = isMachineBearerRequest(req, this.config)
@@ -84,11 +94,20 @@ export class AccessGateway {
     return this.server !== undefined
   }
 
+  get stats(): GatewayStats {
+    return {
+      requestCount: this.requestCount,
+      webSocketCount: this.webSocketCount,
+      ...(this.lastRequestAt === undefined ? {} : { lastRequestAt: this.lastRequestAt }),
+    }
+  }
+
   private get target(): string {
     return `http://127.0.0.1:${this.upstreamPort}`
   }
 
   private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    this.observe(false)
     const pathname = safePathname(req.url)
     if (pathname === undefined) return this.text(res, 400, 'bad request')
     if (pathname === `${AUTH_PREFIX}/login` && req.method === 'GET') return this.showLogin(req, res)
@@ -188,6 +207,12 @@ export class AccessGateway {
     if (cookie === undefined) delete req.headers.cookie
     else req.headers.cookie = cookie
     if (authenticated) req.headers['x-dsh-access-assertion'] = this.assertion.issue()
+  }
+
+  private observe(webSocket: boolean): void {
+    this.requestCount += 1
+    if (webSocket) this.webSocketCount += 1
+    this.lastRequestAt = Date.now()
   }
 
   private get cookieName(): string {
