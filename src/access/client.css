@@ -2,18 +2,53 @@
   --gate-control-height: 36px;
   --gate-radius: 10px;
   --gate-gap: 12px;
+  --gate-surface: #f7f9f8;
+  --gate-surface-raised: #ffffff;
+  --gate-surface-muted: #eef2f0;
+  --gate-border: #d8dfdc;
+  --gate-border-strong: #9eada7;
+  --gate-text: #202825;
+  --gate-text-secondary: #56625d;
+  --gate-text-tertiary: #68756f;
+  --gate-accent: #356f66;
+  --gate-accent-hover: #285e56;
+  --gate-focus: #17665a;
+  --gate-success: #26715a;
+  --gate-danger: #a23d35;
+  --gate-warning: #76571f;
+  --gate-selection: #cfe4de;
+  --gate-selection-text: #173a34;
+  --gate-surface-active: #e6ece9;
+  --gate-control-hover: #e5ebe8;
+  --gate-control-active: #d9e5e1;
+  --gate-focus-ring: #dbeae6;
+  --gate-placeholder: #7a8681;
+  --gate-switch: #aeb9b5;
+  --gate-switch-knob: #ffffff;
+  --gate-primary-text: #ffffff;
+  --gate-warning-border: #e5cf9f;
+  --gate-warning-surface: #fff7e7;
+  --gate-warning-dot: #b07a2b;
+  --gate-danger-border: #efcac6;
+  --gate-danger-surface: #fff1ef;
+  --gate-success-surface: #edf8f3;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   list-style: none;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 1px solid var(--gate-border);
   border-radius: 12px;
-  background: var(--dsw-alias-bg-layer-3);
-  color: var(--dsw-alias-label-primary, #303238);
+  background: var(--gate-surface);
+  color: var(--gate-text);
+  color-scheme: light;
   transition: border-color .16s, background .16s;
-  font-family: var(--dsw-alias-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
 }
-.dsh-access-gate-card:hover { border-color: var(--dsw-alias-label-dimmed); }
-.dsh-access-gate-card.is-open { border-color: var(--dsw-alias-label-dimmed); background: var(--dsw-alias-bg-layer-2); }
+.dsh-access-gate-card:hover { border-color: var(--gate-border-strong); }
+.dsh-access-gate-card.is-open { border-color: var(--gate-border-strong); background: var(--gate-surface); }
 
 .dsh-access-gate-card *,
 .dsh-access-gate-card *::before,
@@ -21,17 +56,25 @@
   box-sizing: border-box;
 }
 
-.dsh-access-gate-header { appearance: none; display: flex; width: 100%; align-items: center; gap: 12px; padding: 14px 16px; border: 0; border-radius: 12px; background: transparent; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.dsh-access-gate-card ::selection {
+  background: var(--gate-selection);
+  color: var(--gate-selection-text);
+}
+
+.dsh-access-gate-header { appearance: none; -webkit-appearance: none; display: flex; width: 100%; min-height: 58px; align-items: center; gap: 12px; margin: 0; padding: 12px 16px; border: 0; border-radius: 12px; background: var(--gate-surface); color: var(--gate-text); text-align: left; cursor: pointer; font: inherit; touch-action: manipulation; }
+
+.dsh-access-gate-header:hover { background: var(--gate-surface-muted); }
+.dsh-access-gate-header:active { background: var(--gate-surface-active); }
 
 .dsh-access-gate-header:focus-visible {
-  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline: 2px solid var(--gate-focus);
   outline-offset: -2px;
 }
 .dsh-access-gate-body button:focus-visible,
 .dsh-access-gate-body input:focus-visible,
 .dsh-access-gate-body select:focus-visible,
 .dsh-access-gate-body textarea:focus-visible {
-  outline: 2px solid var(--dsw-alias-interactive-primary, #547d78);
+  outline: 2px solid var(--gate-focus);
   outline-offset: 2px;
 }
 
@@ -45,20 +88,20 @@
 .dsh-access-gate-header > span:first-child { display: flex; flex: 1; flex-direction: column; gap: 4px; }
 
 .dsh-access-gate-header strong { font-size: 15px; font-weight: 600; line-height: 1.4; }
-.dsh-access-gate-header small { color: var(--dsw-alias-label-tertiary); font-size: 13px; line-height: 1.5; }
+.dsh-access-gate-header small { color: var(--gate-text-tertiary); font-size: 13px; line-height: 1.5; }
 .dsh-access-gate-summary,
 .dsh-access-gate-field small,
 .dsh-access-gate-section-title small,
 .dsh-access-gate-toggle-row small {
-  color: var(--dsw-alias-label-secondary, #68686f);
+  color: var(--gate-text-secondary);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.5;
 }
 
 .dsh-access-gate-summary { display: flex; flex: none; align-items: center; gap: 8px; font-size: 12px; white-space: nowrap; }
-.dsh-access-gate-summary > i { width: 7px; height: 7px; border-radius: 50%; background: var(--dsw-alias-label-tertiary, #9a9a9f); }
-.dsh-access-gate-summary > i[data-running="true"] { background: var(--dsw-alias-status-success, #4d8a72); }
+.dsh-access-gate-summary > i { width: 7px; height: 7px; border-radius: 50%; background: var(--gate-text-tertiary); }
+.dsh-access-gate-summary > i[data-running="true"] { background: var(--gate-success); }
 .dsh-access-gate-summary > b { width: 8px; height: 8px; margin-left: 1px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); transition: transform 160ms ease; }
 .dsh-access-gate-card.is-open .dsh-access-gate-summary > b { transform: rotate(225deg); }
 
@@ -67,7 +110,7 @@
   gap: var(--gate-gap);
   margin: 0 16px;
   padding: 12px 0 8px;
-  border-top: 1px solid var(--dsw-alias-border-l2);
+  border-top: 1px solid var(--gate-border);
 }
 
 .dsh-access-gate-body section {
@@ -75,9 +118,9 @@
   display: grid;
   gap: var(--gate-gap);
   padding: 14px;
-  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .14));
+  border: 1px solid var(--gate-border);
   border-radius: 11px;
-  background: var(--dsw-alias-background-primary, #fff);
+  background: var(--gate-surface-raised);
 }
 
 .dsh-access-gate-diagnostics {
@@ -108,7 +151,7 @@
 .dsh-access-gate-diagnostic-fact small,
 .dsh-access-gate-diagnostic-issues small,
 .dsh-access-gate-checklist small {
-  color: var(--dsw-alias-label-secondary, #62656c);
+  color: var(--gate-text-secondary);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.5;
@@ -120,17 +163,20 @@
   margin: 0;
   padding: 0 11px;
   appearance: none;
-  border: 1px solid var(--dsw-alias-border-primary, #d6d8dc);
+  -webkit-appearance: none;
+  border: 1px solid var(--gate-border);
   border-radius: 8px;
-  background: var(--dsw-alias-background-secondary, #f5f6f7);
-  color: inherit;
+  background: var(--gate-surface-muted);
+  color: var(--gate-text);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .dsh-access-gate-diagnostics-head button:hover:not(:disabled) {
-  border-color: var(--dsw-alias-label-secondary, #62656c);
+  border-color: var(--gate-border-strong);
+  background: var(--gate-control-hover);
 }
 
 .dsh-access-gate-diagnostics-head button:disabled {
@@ -143,9 +189,9 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-secondary, #e2e3e6);
+  border: 1px solid var(--gate-border);
   border-radius: 9px;
-  background: var(--dsw-alias-border-secondary, #e2e3e6);
+  background: var(--gate-border);
 }
 
 .dsh-access-gate-diagnostic-fact {
@@ -153,12 +199,12 @@
   display: grid;
   gap: 3px;
   padding: 9px 10px;
-  background: var(--dsw-alias-background-secondary, #f6f7f8);
+  background: var(--gate-surface-muted);
 }
 
 .dsh-access-gate-diagnostic-fact strong {
   overflow: hidden;
-  color: var(--dsw-alias-status-error, #a7332d);
+  color: var(--gate-danger);
   font-size: 12px;
   font-weight: 580;
   line-height: 1.4;
@@ -167,7 +213,7 @@
 }
 
 .dsh-access-gate-diagnostic-fact[data-ok="true"] strong {
-  color: var(--dsw-alias-status-success, #34745e);
+  color: var(--gate-success);
 }
 
 .dsh-access-gate-diagnostic-issues {
@@ -181,14 +227,14 @@
   align-items: flex-start;
   gap: 9px;
   padding: 8px 9px;
-  border: 1px solid #ead3aa;
+  border: 1px solid var(--gate-warning-border);
   border-radius: 8px;
-  background: #fff8eb;
+  background: var(--gate-warning-surface);
 }
 
 .dsh-access-gate-diagnostic-issues > div[data-severity="danger"] {
-  border-color: #efcac6;
-  background: #fff3f1;
+  border-color: var(--gate-danger-border);
+  background: var(--gate-danger-surface);
 }
 
 .dsh-access-gate-diagnostic-issues i {
@@ -197,11 +243,11 @@
   flex: none;
   margin-top: 6px;
   border-radius: 50%;
-  background: #b07a2b;
+  background: var(--gate-warning-dot);
 }
 
 .dsh-access-gate-diagnostic-issues [data-severity="danger"] i {
-  background: var(--dsw-alias-status-error, #b42318);
+  background: var(--gate-danger);
 }
 
 .dsh-access-gate-diagnostic-issues span {
@@ -219,9 +265,9 @@
 
 .dsh-access-gate-checklist {
   overflow: hidden;
-  border: 1px solid var(--dsw-alias-border-secondary, #e2e3e6);
+  border: 1px solid var(--gate-border);
   border-radius: 10px;
-  background: var(--dsw-alias-background-primary, #fff);
+  background: var(--gate-surface-raised);
 }
 
 .dsh-access-gate-checklist summary {
@@ -233,9 +279,14 @@
   padding: 9px 12px;
   list-style: none;
   cursor: pointer;
+  outline: none;
+  touch-action: manipulation;
 }
 
 .dsh-access-gate-checklist summary::-webkit-details-marker { display: none; }
+.dsh-access-gate-checklist summary::marker { content: ""; }
+.dsh-access-gate-checklist summary:hover { background: var(--gate-surface-muted); }
+.dsh-access-gate-checklist summary:focus-visible { outline: 2px solid var(--gate-focus); outline-offset: -2px; }
 
 .dsh-access-gate-checklist summary > span {
   min-width: 0;
@@ -264,7 +315,7 @@
 .dsh-access-gate-checklist ol {
   margin: 0;
   padding: 0 18px 12px 34px;
-  color: var(--dsw-alias-label-secondary, #62656c);
+  color: var(--gate-text-secondary);
   font-size: 12px;
   line-height: 1.65;
 }
@@ -287,15 +338,19 @@
   display: grid;
   gap: 3px;
   padding: 11px 12px;
-  border: 1px solid rgba(162, 115, 45, .18);
+  border: 1px solid var(--gate-warning-border);
   border-radius: var(--gate-radius);
-  background: rgba(181, 137, 68, .07);
+  background: var(--gate-warning-surface);
   font-size: 12px;
   line-height: 1.55;
 }
 
 .dsh-access-gate-warning span {
-  color: var(--dsw-alias-label-secondary, #68686f);
+  color: var(--gate-text-secondary);
+}
+
+.dsh-access-gate-warning strong {
+  color: var(--gate-warning);
 }
 
 .dsh-access-gate-grid {
@@ -334,19 +389,42 @@
   width: 100%;
   min-width: 0;
   margin: 0;
-  border: 1px solid var(--dsw-alias-border-primary, rgba(100, 104, 110, .22));
+  border: 1px solid var(--gate-border-strong);
   border-radius: 9px;
-  background: var(--dsw-alias-background-primary, #fff);
-  color: inherit;
+  background-color: var(--gate-surface-raised);
+  color: var(--gate-text);
   font: inherit;
   outline: none;
   appearance: none;
+  -webkit-appearance: none;
 }
 
 .dsh-access-gate-field input,
 .dsh-access-gate-field select {
   height: var(--gate-control-height);
   padding: 0 10px;
+}
+
+.dsh-access-gate-field select option {
+  background: var(--gate-surface-raised);
+  color: var(--gate-text);
+}
+
+.dsh-access-gate-field input::placeholder,
+.dsh-access-gate-field textarea::placeholder {
+  color: var(--gate-placeholder);
+  opacity: 1;
+}
+
+.dsh-access-gate-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.dsh-access-gate-field input[type="number"]::-webkit-inner-spin-button,
+.dsh-access-gate-field input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
 }
 
 .dsh-access-gate-field select {
@@ -360,7 +438,7 @@
 .dsh-access-gate-field textarea {
   min-height: 76px;
   padding: 9px 10px;
-  resize: vertical;
+  resize: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-weight: 400;
   line-height: 1.5;
@@ -369,8 +447,8 @@
 .dsh-access-gate-field input:focus,
 .dsh-access-gate-field select:focus,
 .dsh-access-gate-field textarea:focus {
-  border-color: var(--dsw-alias-interactive-primary, #547d78);
-  box-shadow: 0 0 0 2px rgba(84, 125, 120, .1);
+  border-color: var(--gate-accent);
+  box-shadow: 0 0 0 2px var(--gate-focus-ring);
 }
 
 .dsh-access-gate-field input:disabled,
@@ -388,9 +466,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid var(--dsw-alias-border-secondary, rgba(120, 120, 128, .13));
+  border: 1px solid var(--gate-border);
   border-radius: 9px;
-  background: var(--dsw-alias-background-secondary, rgba(128, 128, 128, .035));
+  background: var(--gate-surface-muted);
 }
 
 .dsh-access-gate-toggle-row.is-compact {
@@ -417,13 +495,15 @@
   width: 1px;
   height: 1px;
   opacity: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .dsh-access-gate-switch span {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: rgba(120, 120, 128, .24);
+  background: var(--gate-switch);
   transition: background 160ms ease;
 }
 
@@ -435,13 +515,13 @@
   left: 2px;
   top: 2px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--gate-switch-knob);
   box-shadow: 0 1px 3px rgba(0, 0, 0, .17);
   transition: transform 160ms ease;
 }
 
 .dsh-access-gate-switch input:checked + span {
-  background: var(--dsw-alias-interactive-primary, #547d78);
+  background: var(--gate-accent);
 }
 
 .dsh-access-gate-switch input:checked + span::after {
@@ -449,7 +529,7 @@
 }
 
 .dsh-access-gate-switch input:focus-visible + span {
-  outline: 2px solid var(--dsw-alias-interactive-primary, #547d78);
+  outline: 2px solid var(--gate-focus);
   outline-offset: 2px;
 }
 
@@ -472,20 +552,39 @@
   min-height: 34px;
   margin: 0;
   padding: 0 12px;
-  border: 1px solid var(--dsw-alias-border-primary, rgba(100, 104, 110, .2));
+  border: 1px solid var(--gate-border-strong);
   border-radius: 9px;
-  background: transparent;
-  color: inherit;
+  background: var(--gate-surface-muted);
+  color: var(--gate-text);
   font: inherit;
   cursor: pointer;
   appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+}
+
+.dsh-access-gate-actions button:hover:not(:disabled),
+.dsh-access-gate-savebar button:hover:not(:disabled) {
+  border-color: var(--gate-accent);
+  background: var(--gate-control-hover);
+}
+
+.dsh-access-gate-actions button:active:not(:disabled),
+.dsh-access-gate-savebar button:active:not(:disabled) {
+  background: var(--gate-control-active);
 }
 
 .dsh-access-gate-actions button.is-primary,
 .dsh-access-gate-savebar button.is-primary {
   border-color: transparent;
-  background: var(--dsw-alias-interactive-primary, #547d78);
-  color: #fff;
+  background: var(--gate-accent);
+  color: var(--gate-primary-text);
+}
+
+.dsh-access-gate-actions button.is-primary:hover:not(:disabled),
+.dsh-access-gate-savebar button.is-primary:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--gate-accent-hover);
 }
 
 .dsh-access-gate-actions button:disabled,
@@ -500,7 +599,7 @@
 
 .dsh-access-gate-savebar > span {
   margin-right: auto;
-  color: var(--dsw-alias-label-secondary, #68686f);
+  color: var(--gate-text-secondary);
   font-size: 12px;
 }
 
@@ -513,18 +612,54 @@
 }
 
 .dsh-access-gate-message[data-kind="error"] {
-  color: var(--dsw-alias-status-error, #b42318);
-  background: rgba(180, 35, 24, .065);
+  color: var(--gate-danger);
+  background: var(--gate-danger-surface);
 }
 
 .dsh-access-gate-message[data-kind="warning"] {
-  color: #7a5a27;
-  background: rgba(181, 137, 68, .08);
+  color: var(--gate-warning);
+  background: var(--gate-warning-surface);
 }
 
 .dsh-access-gate-message[data-kind="success"] {
-  color: var(--dsw-alias-status-success, #34745e);
-  background: rgba(52, 116, 94, .07);
+  color: var(--gate-success);
+  background: var(--gate-success-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dsh-access-gate-card {
+    --gate-surface: #171d1b;
+    --gate-surface-raised: #202825;
+    --gate-surface-muted: #28312e;
+    --gate-border: #394541;
+    --gate-border-strong: #66756f;
+    --gate-text: #edf2f0;
+    --gate-text-secondary: #bac5c1;
+    --gate-text-tertiary: #9eaaa5;
+    --gate-accent: #6da99e;
+    --gate-accent-hover: #82b9af;
+    --gate-focus: #8ac8bd;
+    --gate-success: #78bca0;
+    --gate-danger: #ef9b93;
+    --gate-warning: #e3c378;
+    --gate-selection: #315c54;
+    --gate-selection-text: #f3f8f6;
+    --gate-surface-active: #303b37;
+    --gate-control-hover: #33403c;
+    --gate-control-active: #3c4a45;
+    --gate-focus-ring: #294f48;
+    --gate-placeholder: #89958f;
+    --gate-switch: #58655f;
+    --gate-switch-knob: #f4f7f6;
+    --gate-primary-text: #10211d;
+    --gate-warning-border: #66552e;
+    --gate-warning-surface: #342f22;
+    --gate-warning-dot: #d1a84e;
+    --gate-danger-border: #68413e;
+    --gate-danger-surface: #372624;
+    --gate-success-surface: #20332c;
+    color-scheme: dark;
+  }
 }
 
 @media (max-width: 720px) {

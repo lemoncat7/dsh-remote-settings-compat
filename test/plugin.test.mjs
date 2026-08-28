@@ -91,3 +91,25 @@ test('bundle composes settings compatibility and access gateway without executab
   assert.equal(pkg.dependencies['http-proxy'], '^1.18.1')
   assert.equal(pkg.dependencies['@lemoncat7/dsh-access-gate'], undefined)
 })
+
+test('remote access UI owns its visual states instead of inheriting browser or DSH theme styles', () => {
+  const css = readFileSync(new URL('../src/access/client.css', import.meta.url), 'utf8')
+  const loginPage = readFileSync(new URL('../src/access/login-page.ts', import.meta.url), 'utf8')
+
+  assert.doesNotMatch(css, /--dsw-/)
+  assert.doesNotMatch(css, /background\s*:\s*transparent\b/)
+  assert.match(css, /color-scheme:\s*light/)
+  assert.match(css, /@media \(prefers-color-scheme: dark\)/)
+  assert.match(css, /color-scheme:\s*dark/)
+  assert.match(css, /-webkit-appearance:\s*none/)
+  assert.match(css, /\.dsh-access-gate-field select\s*\{[\s\S]*background-image:/)
+  assert.match(css, /:focus-visible/)
+
+  assert.doesNotMatch(loginPage, /color-scheme:\s*light\s+dark/)
+  assert.doesNotMatch(loginPage, /background:\s*rgba\(/)
+  assert.match(loginPage, /@media\(prefers-color-scheme:dark\)/)
+  assert.match(loginPage, /input,button\{[^}]*appearance:none/)
+  assert.match(loginPage, /input:focus-visible/)
+  assert.match(loginPage, /button:hover:not\(:disabled\)/)
+  assert.match(loginPage, /button:disabled/)
+})

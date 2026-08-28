@@ -16,16 +16,23 @@ export function loginPage(options: { returnTo: string; csrfToken: string; error?
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>访问 DSH</title>
   <style nonce="${nonce}">
-    :root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#eef1f0;color:#202624}
-    *{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 15%,rgba(84,125,120,.11),transparent 38%),#eef1f0}
-    main{width:min(100%,390px);padding:30px;border:1px solid rgba(35,48,43,.12);border-radius:18px;background:rgba(250,251,250,.94);box-shadow:0 22px 60px rgba(22,34,30,.10)}
-    header{display:grid;gap:7px;margin-bottom:24px}h1{margin:0;font-size:25px;letter-spacing:-.02em}header p,.help{margin:0;color:#66716d;font-size:13px;line-height:1.55}
-    label{display:grid;gap:8px;font-size:13px;font-weight:600}input{width:100%;height:46px;padding:0 13px;border:1px solid rgba(35,48,43,.18);border-radius:11px;background:#fff;color:#202624;font:inherit;outline:none}input:focus{border-color:#547d78;box-shadow:0 0 0 3px rgba(84,125,120,.12)}
-    button{width:100%;height:46px;margin-top:16px;border:0;border-radius:11px;background:#466f69;color:#fff;font:650 14px/1 inherit;cursor:pointer}button:disabled{opacity:.42;cursor:not-allowed}
-    .error,.notice{margin:0 0 16px;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.5}.error{color:#874440;background:#f7e9e7}.notice{color:#69572f;background:#f4efdf}
+    :root{color-scheme:light;font-family:Inter,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:#eef2f0;color:#202825}
+    *{box-sizing:border-box}
+    ::selection{background:#cfe4de;color:#173a34}
+    body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;background:#eef2f0}
+    main{width:min(100%,390px);padding:30px;border:1px solid #d8dfdc;border-radius:18px;background:#fafbfa;box-shadow:0 22px 60px rgba(22,34,30,.10)}
+    header{display:grid;gap:7px;margin-bottom:24px}h1{margin:0;font-size:25px;font-weight:650;line-height:1.25;letter-spacing:-.02em}header p,.help{margin:0;color:#596760;font-size:13px;line-height:1.55}
+    label{display:grid;gap:8px;color:#202825;font-size:13px;font-weight:600}
+    input,button{-webkit-appearance:none;appearance:none;font-family:inherit}
+    input{width:100%;height:46px;margin:0;padding:0 13px;border:1px solid #9eada7;border-radius:11px;background:#fff;color:#202825;font-size:14px;line-height:1;outline:none}
+    input::placeholder{color:#7a8681;opacity:1}input:hover:not(:disabled){border-color:#6f817a}input:focus-visible{border-color:#356f66;box-shadow:0 0 0 3px #dbeae6}input:disabled{background:#eef2f0;color:#76827d;cursor:not-allowed;opacity:1}
+    button{width:100%;height:46px;margin:16px 0 0;padding:0 16px;border:1px solid #356f66;border-radius:11px;background:#356f66;color:#fff;font-size:14px;font-weight:650;line-height:1;cursor:pointer;touch-action:manipulation;transition:background .15s,border-color .15s,transform .08s}
+    button:hover:not(:disabled){border-color:#285e56;background:#285e56}button:active:not(:disabled){transform:translateY(1px)}button:focus-visible{outline:2px solid #17665a;outline-offset:3px}button:disabled{border-color:#aeb9b5;background:#aeb9b5;color:#f7f9f8;cursor:not-allowed;opacity:1}
+    .error,.notice{margin:0 0 16px;padding:10px 12px;border:1px solid;border-radius:10px;font-size:12px;line-height:1.5}.error{border-color:#edc5c0;color:#874440;background:#fff1ef}.notice{border-color:#e5cf9f;color:#69572f;background:#fff7e7}
     .help{margin-top:18px;text-align:center;font-size:11px}
-    @media(prefers-color-scheme:dark){:root,body{background:#111615;color:#edf2f0}body{background:radial-gradient(circle at 50% 15%,rgba(98,164,151,.12),transparent 38%),#111615}main{background:rgba(27,34,32,.96);border-color:rgba(225,235,231,.10);box-shadow:0 22px 60px rgba(0,0,0,.32)}header p,.help{color:#98a39f}input{background:#171d1b;color:#edf2f0;border-color:rgba(225,235,231,.16)}.error{color:#f1bbb5;background:#422724}.notice{color:#dbc98c;background:#383221}}
+    @media(prefers-color-scheme:dark){:root{color-scheme:dark;background:#111614;color:#edf2f0}::selection{background:#315c54;color:#f3f8f6}body{background:#111614}main{border-color:#394541;background:#1b2220;box-shadow:0 22px 60px rgba(0,0,0,.32)}h1,label{color:#edf2f0}header p,.help{color:#aab6b1}input{border-color:#66756f;background:#202825;color:#edf2f0}input::placeholder{color:#89958f}input:hover:not(:disabled){border-color:#83928c}input:focus-visible{border-color:#6da99e;box-shadow:0 0 0 3px #294f48}input:disabled{background:#28312e;color:#9eaaa5}button{border-color:#6da99e;background:#6da99e;color:#10211d}button:hover:not(:disabled){border-color:#82b9af;background:#82b9af}button:focus-visible{outline-color:#8ac8bd}button:disabled{border-color:#58655f;background:#58655f;color:#cbd4d1}.error{border-color:#68413e;color:#ef9b93;background:#372624}.notice{border-color:#66552e;color:#e3c378;background:#342f22}}
     @media(max-width:520px){body{padding:16px}main{padding:24px 20px;border-radius:15px}}
+    @media(prefers-reduced-motion:reduce){button{transition:none}}
   </style>
 </head>
 <body>
