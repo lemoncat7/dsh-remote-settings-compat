@@ -136,7 +136,7 @@ export class AccessGateway {
     const page = loginPage({ returnTo, csrfToken, configured, ...(error === undefined ? {} : { error }) })
     res.writeHead(configured ? 200 : 503, securityHeaders({
       'content-type': 'text/html; charset=utf-8',
-      'content-security-policy': `default-src 'none'; style-src 'nonce-${page.nonce}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
+      'content-security-policy': `default-src 'none'; style-src 'nonce-${page.nonce}'; script-src 'nonce-${page.nonce}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
       'cache-control': 'no-store',
       'set-cookie': loginCsrfCookie(csrfToken, this.config.secureCookies),
     }))

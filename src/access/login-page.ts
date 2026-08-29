@@ -1,12 +1,15 @@
 import { randomBytes } from 'node:crypto'
+import { loginVisualScript, loginVisualStyles } from './login-visual.js'
 
 export function loginPage(options: { returnTo: string; csrfToken: string; error?: string; configured: boolean }): { html: string; nonce: string } {
   const nonce = randomBytes(18).toString('base64url')
   const returnTo = escapeAttribute(options.returnTo)
   const csrfToken = escapeAttribute(options.csrfToken)
-  const error = options.error === undefined ? '' : `<p class="error" role="alert">${escapeHtml(options.error)}</p>`
-  const unavailable = options.configured ? '' : '<p class="notice">门禁密码尚未设置。请先从 DSH 插件设置中完成初始化。</p>'
+  const hasError = options.error !== undefined
+  const error = hasError ? `<p class="message error" id="password-error" role="alert">${escapeHtml(options.error ?? '')}</p>` : ''
+  const unavailable = options.configured ? '' : '<p class="message notice" role="status">门禁密码尚未设置。请先从 DSH 插件设置中完成初始化。</p>'
   const disabled = options.configured ? '' : ' disabled'
+  const invalid = hasError ? ' aria-invalid="true" aria-describedby="password-error"' : ''
   return {
     nonce,
     html: `<!doctype html>
@@ -15,38 +18,42 @@ export function loginPage(options: { returnTo: string; csrfToken: string; error?
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>访问 DSH</title>
-  <style nonce="${nonce}">
-    :root{color-scheme:light;font-family:Inter,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:#e8edf3;color:#252c35}
-    *{box-sizing:border-box}
-    ::selection{background:#dde7e5;color:#252c35}
-    body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;background:#e8edf3}
-    main{width:min(100%,390px);padding:30px;border:1px solid #cbd5d9;border-radius:18px;background:#f4f7fa;box-shadow:0 22px 60px rgba(37,44,53,.10)}
-    header{display:grid;gap:7px;margin-bottom:24px}h1{margin:0;font-size:25px;font-weight:650;line-height:1.25;letter-spacing:-.02em}header p,.help{margin:0;color:#535f6c;font-size:13px;line-height:1.55}
-    label{display:grid;gap:8px;color:#252c35;font-size:13px;font-weight:600}
-    input,button{-webkit-appearance:none;appearance:none;font-family:inherit}
-    input{width:100%;height:46px;margin:0;padding:0 13px;border:1px solid #95a7ab;border-radius:11px;background:#f8fafc;color:#252c35;font-size:14px;line-height:1;outline:none}
-    input::placeholder{color:#8994a0;opacity:1}input:hover:not(:disabled){border-color:#5f6b78}input:focus-visible{border-color:#547d78;box-shadow:0 0 0 3px #dde7e5}input:disabled{background:#e8edf3;color:#8994a0;cursor:not-allowed;opacity:1}
-    button{width:100%;height:46px;margin:16px 0 0;padding:0 16px;border:1px solid #547d78;border-radius:11px;background:#547d78;color:#fff;font-size:14px;font-weight:650;line-height:1;cursor:pointer;touch-action:manipulation;transition:background .15s,border-color .15s,transform .08s}
-    button:hover:not(:disabled){border-color:#426a65;background:#426a65}button:active:not(:disabled){transform:translateY(1px)}button:focus-visible{outline:2px solid #547d78;outline-offset:3px}button:disabled{border-color:#a3bbb7;background:#a3bbb7;color:#fff;cursor:not-allowed;opacity:1}
-    .error,.notice{margin:0 0 16px;padding:10px 12px;border:1px solid;border-radius:10px;font-size:12px;line-height:1.5}.error{border-color:#e3b9bd;color:#b44952;background:#f8e7e8}.notice{border-color:#dbc18e;color:#8a5b1c;background:#f3e8d2}
-    .help{margin-top:18px;text-align:center;font-size:11px}
-    @media(prefers-color-scheme:dark){:root{color-scheme:dark;background:#151c1e;color:#e3eaeb}::selection{background:#315357;color:#e3eaeb}body{background:#151c1e}main{border-color:#3c494b;background:#1f282a;box-shadow:0 22px 60px rgba(0,0,0,.32)}h1,label{color:#e3eaeb}header p,.help{color:#bbc9cc}input{border-color:#536163;background:#1d2527;color:#e3eaeb}input::placeholder{color:#899ca0}input:hover:not(:disabled){border-color:#687a7e}input:focus-visible{border-color:#69b6ba;box-shadow:0 0 0 3px #283335}input:disabled{background:#20292b;color:#95a7ab}button{border-color:#69b6ba;background:#69b6ba;color:#101719}button:hover:not(:disabled){border-color:#8aced0;background:#8aced0}button:focus-visible{outline-color:#8aced0}button:disabled{border-color:#47797d;background:#47797d;color:#cad5d7}.error{border-color:#74444a;color:#ff7d86;background:#3e2529}.notice{border-color:#665328;color:#e9bd68;background:#3a2d14}}
-    @media(max-width:520px){body{padding:16px}main{padding:24px 20px;border-radius:15px}}
-    @media(prefers-reduced-motion:reduce){button{transition:none}}
-  </style>
+  <meta name="theme-color" content="#e7e8eb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111215" media="(prefers-color-scheme: dark)">
+  <style nonce="${nonce}">${loginVisualStyles}</style>
 </head>
 <body>
-  <main>
-    <header><h1>访问 DSH</h1><p>此工作台受到密码保护。登录会话只保存在当前浏览器中。</p></header>
-    ${error}${unavailable}
-    <form method="post" action="/__dsh_access/login">
-      <input type="hidden" name="returnTo" value="${returnTo}">
-      <input type="hidden" name="csrfToken" value="${csrfToken}">
-      <label>访问密码<input name="password" type="password" autocomplete="current-password" minlength="6" maxlength="1024" required autofocus${disabled}></label>
-      <button type="submit"${disabled}>登录</button>
-    </form>
-    <p class="help">多次失败将触发临时锁定。</p>
+  <div class="visual-scene" aria-hidden="true"><canvas class="ripple-distortion-canvas" data-ripple-distortion></canvas></div>
+  <main class="access-layout">
+    <section class="access-context" aria-label="DSH 远程访问">
+      <div class="wordmark"><span class="wordmark-mark">DSH</span><span>REMOTE ACCESS</span></div>
+      <p class="scene-kicker">PRIVATE WORKSPACE</p>
+      <p class="scene-title">连接到你的 DSH 工作台</p>
+      <p class="scene-copy">通过独立门禁进入远程工作环境。验证成功后，会话仅保存在当前浏览器。</p>
+      <div class="security-notes" aria-label="访问保护"><span>独立密码门禁</span><span>浏览器会话隔离</span></div>
+    </section>
+    <section class="login-panel" aria-labelledby="login-title">
+      <div class="panel-wordmark"><span class="wordmark-mark">DSH</span><span>REMOTE ACCESS</span></div>
+      <header class="login-header">
+        <p class="login-kicker">SECURE ACCESS</p>
+        <h1 id="login-title">验证访问</h1>
+        <p>输入 remote 门禁密码以继续进入工作台。</p>
+      </header>
+      ${error}${unavailable}
+      <form method="post" action="/__dsh_access/login">
+        <input type="hidden" name="returnTo" value="${returnTo}">
+        <input type="hidden" name="csrfToken" value="${csrfToken}">
+        <label class="password-label" for="access-password">访问密码</label>
+        <div class="password-control">
+          <input id="access-password" data-password-input name="password" type="password" autocomplete="current-password" minlength="6" maxlength="1024" placeholder="输入访问密码" required autofocus${invalid}${disabled}>
+          <button class="password-toggle" data-password-toggle type="button" aria-label="显示密码" aria-pressed="false" aria-controls="access-password"${disabled}><span class="eye-glyph" aria-hidden="true"></span></button>
+        </div>
+        <button class="submit-button" type="submit"${disabled}>进入工作台</button>
+      </form>
+      <p class="help">多次验证失败将触发临时锁定</p>
+    </section>
   </main>
+  <script nonce="${nonce}">${loginVisualScript}</script>
 </body>
 </html>`,
   }
