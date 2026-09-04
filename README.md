@@ -2,6 +2,10 @@
 
 `@lemoncat7/dsh-remote-settings-compat` 是 DeepSeek Harness 的统一远程访问插件。它把可信远程设置和密码访问网关收敛到一个安装包、一个设置入口，同时保持各模块独立、可审计。
 
+## 兼容性
+
+正式版 `0.5.0` 针对 DeepSeek Harness `0.1.2-rc.1` 构建并完成部署验证，需要 Node.js `22.19+` 或 `24+`。插件直接使用该版本的 Connection、Credentials 与 Settings 服务接口。
+
 ## 能力
 
 - 允许显式可信的浏览器 Origin 使用 DSH 官方模型、凭证与插件设置。
@@ -16,7 +20,6 @@
 ```text
 remote-settings-compat     可信 Origin 与页面元数据
 connection                 官方 Connection 兼容层
-rpc                        最小化的远程设置 RPC 路由
 access                     独立密码网关与管理 API
 client                     统一的“远程访问”设置卡
 ```

@@ -1,6 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { CredentialProvider } from '@deepseek-ai/dsh-credentials'
-import { settingsNamespace, type SettingsProvider } from '@deepseek-ai/dsh-settings'
+import type { HostConnectionHandle } from '@deepseek-ai/dsh-client-connection'
+import type { SettingsProvider } from '@deepseek-ai/dsh-settings'
 import type { RemoteSettingsTrust } from '../index.js'
 import { registerAdminApi, createSetupToken } from './admin-api.js'
 import { ConfigSchema, resolveAccessOrigins, resolveConfig, type Config as AccessGateConfig } from './config.js'
@@ -13,10 +14,11 @@ import { SessionStore } from './sessions.js'
 export const Config = ConfigSchema
 export type Config = AccessGateConfig
 export const name = 'dsh-access-gate'
-export const inject = ['credentials', 'settings', 'webServer', 'remoteSettingsTrust']
+export const inject = ['connection', 'credentials', 'settings', 'webServer', 'remoteSettingsTrust']
 
 interface RuntimeContext extends Context {
   credentials: CredentialProvider
+  connection: HostConnectionHandle
   settings: SettingsProvider
   remoteSettingsTrust: RemoteSettingsTrust
   webServer: {
@@ -33,7 +35,7 @@ interface RuntimeContext extends Context {
 export function apply(context: Context, base: AccessGateConfig): void {
   const ctx = context as RuntimeContext
   const scope = ctx.settings.register(
-    settingsNamespace('dsh-access-gate'),
+    'dsh-access-gate',
     ConfigSchema,
     { base, applies: 'restart', validate: value => { resolveConfig(value) } },
   )
@@ -58,7 +60,7 @@ export function apply(context: Context, base: AccessGateConfig): void {
   })
   const limiter = new LoginLimiter(config.maxFailedAttempts, config.lockoutMinutes * 60_000)
   const assertion = new ProxyAssertion()
-  const gateway = new AccessGateway(config, ctx.webServer.port, passwords, sessions, limiter, assertion, ctx.logger)
+  const gateway = new AccessGateway(config, ctx.webServer.port, passwords, sessions, limiter, assertion, ctx.connection, ctx.logger)
   const setupToken = createSetupToken()
 
   ctx.effect(

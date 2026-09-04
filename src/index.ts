@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { SettingsProvider } from '@deepseek-ai/dsh-settings'
 import Schema from '@deepseek-ai/schemastery'
 import {
   normalizeTrustedOrigins,
@@ -19,7 +19,7 @@ export const Config: Schema<Config> = Schema.object({
 })
 
 export const name = 'dsh-remote-settings-compat'
-export const inject = ['webServer']
+export const inject = ['settings', 'webServer']
 
 export interface RemoteSettingsTrust {
   readonly origins: readonly string[]
@@ -38,6 +38,7 @@ interface WebServerLike {
 }
 
 interface RuntimeContextLike extends Context {
+  settings: SettingsProvider
   webServer?: WebServerLike
   get(name: 'webServer'): WebServerLike
 }
@@ -57,9 +58,9 @@ export function apply(ctx: Context, config: Config): void {
     for (const listener of listeners) listener()
   }
 
-  installSettingsSection(
+  runtime.settings.installSection(
     ctx,
-    settingsNamespace(REMOTE_SETTINGS_NAMESPACE),
+    REMOTE_SETTINGS_NAMESPACE,
     Config,
     config,
     {

@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import httpProxy from 'http-proxy'
+import type { HostConnectionHandle } from '@deepseek-ai/dsh-client-connection'
 import type { Config } from './config.js'
 import { issueLoginCsrfToken, loginCsrfCookie, loginCsrfCookieName, verifyLoginCsrfToken } from './login-csrf.js'
 import { loginPage } from './login-page.js'
@@ -35,6 +36,7 @@ export class AccessGateway {
     private readonly sessions: SessionStore,
     private readonly limiter: LoginLimiter,
     private readonly assertion: ProxyAssertion,
+    private readonly connection: Pick<HostConnectionHandle, 'authenticatedUrl'>,
     private readonly logger: GatewayLogger,
   ) {
     this.proxy.on('error', (error, _req, target) => {
@@ -164,8 +166,13 @@ export class AccessGateway {
     this.limiter.success(ip)
     const session = this.sessions.issue(ip)
     const maxAge = Math.max(1, Math.floor((session.expiresAt - Date.now()) / 1000))
+    const origin = requestOrigin(req, this.config)
+    if (origin === undefined) return this.text(res, 400, 'public origin is not configured for this request')
     res.writeHead(303, securityHeaders({
-      location: returnTo,
+      // DSH 0.1.2 owns a second, authority-bound browser session. The gateway
+      // password establishes its own session first, then this one-time root URL
+      // lets the official Connection mint its cookie through the same origin.
+      location: this.connection.authenticatedUrl(origin),
       'set-cookie': sessionCookie(session.token, maxAge, this.config.secureCookies),
       'cache-control': 'no-store',
     }))
@@ -234,6 +241,14 @@ export class AccessGateway {
     res.writeHead(status, securityHeaders({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }))
     res.end(JSON.stringify(value))
   }
+}
+
+function requestOrigin(req: IncomingMessage, config: Config): string | undefined {
+  const requestHost = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host
+  const exact = config.publicOrigins.find(value => {
+    try { return new URL(value).host === requestHost } catch { return false }
+  })
+  return exact ?? config.publicOrigins[0]
 }
 
 function safeReturnTo(value: string | undefined): string {

@@ -1,6 +1,6 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "homepage": "https://github.com/lemoncat7/dsh-remote-settings-compat#readme",
   "bugs": {
@@ -35,10 +35,6 @@
     "./connection": {
       "types": "./lib/connection.d.ts",
       "default": "./lib/connection.js"
-    },
-    "./rpc": {
-      "types": "./lib/rpc.d.ts",
-      "default": "./lib/rpc.js"
     },
     "./access": {
       "types": "./lib/access/index.d.ts",
@@ -76,9 +72,9 @@
     "pack:check": "npm pack --dry-run"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-client-connection": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-credentials": "0.1.2-rc.1",
+    "@deepseek-ai/dsh-settings": "0.1.2-rc.1",
     "@deepseek-ai/schemastery": "^3.18.1",
     "http-proxy": "^1.18.1"
   },
