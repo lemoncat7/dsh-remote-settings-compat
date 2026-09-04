@@ -29,6 +29,7 @@
         trustedProxyAddresses: []
         machineBearerPrefixes:
           - /knowledge-api/v1
+        allowAnonymousKnowledgeShares: false
         sessionTtlMinutes: 720
         idleTimeoutMinutes: 60
         maxFailedAttempts: 5

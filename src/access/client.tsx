@@ -161,7 +161,7 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
       const changed = gateFields.filter(field => JSON.stringify(draft[field]) !== JSON.stringify(config?.[field]))
       for (const field of changed) await gateScope.set(field, draft[field])
       if (migrationPending) await gateScope.set('publicOrigins', [])
-      setMessage({ kind: 'success', text: '远程访问配置已保存。可信地址立即同步；网关监听设置在重启 DSH 后生效。' })
+      setMessage({ kind: 'success', text: '远程访问配置已保存。可信地址和匿名分享立即生效；网关监听设置在重启 DSH 后生效。' })
     } catch (error) {
       setMessage({ kind: 'error', text: errorMessage(error) })
     } finally {
@@ -232,6 +232,7 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
 
         <section>
           <div className="dsh-access-gate-section-title"><span><strong>Knowledge 与代理</strong><small>机器 Token 仍由对应插件验证</small></span></div>
+          <ToggleRow label="匿名读取 Knowledge 分享" help="仅放行有效分享链接的 GET；点击底部保存后立即生效，无需重启。" checked={draft.allowAnonymousKnowledgeShares} disabled={!writable} onChange={value => { edit('allowAnonymousKnowledgeShares', value) }} />
           <Field label="机器 Bearer API 前缀" help="默认只放行 Knowledge API。不要填写 /api、/assets 等宽泛路径。"><textarea value={prefixesText} disabled={!writable} onChange={event => { edit('machineBearerPrefixes', lines(event.target.value)) }} /></Field>
           <Field label="可信反向代理 IP" help="每行一个精确 IP；只有这些来源的 X-Real-IP 会被信任。"><textarea value={proxiesText} placeholder="127.0.0.1" disabled={!writable} onChange={event => { edit('trustedProxyAddresses', lines(event.target.value)) }} /></Field>
         </section>
@@ -369,6 +370,7 @@ function defaultConfig(): Config {
     publicOrigins: [],
     trustedProxyAddresses: [],
     machineBearerPrefixes: ['/knowledge-api/v1'],
+    allowAnonymousKnowledgeShares: false,
     sessionTtlMinutes: 720,
     idleTimeoutMinutes: 60,
     maxFailedAttempts: 5,

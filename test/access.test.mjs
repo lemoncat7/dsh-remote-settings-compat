@@ -4,7 +4,7 @@ import { resolveAccessOrigins, resolveConfig } from '../lib/access/config.js'
 import { inspectRequest } from '../lib/access/diagnostics.js'
 import { PasswordStore, validatePassword } from '../lib/access/password.js'
 import { issueLoginCsrfToken, loginCsrfCookie, loginCsrfCookieName, verifyLoginCsrfToken } from '../lib/access/login-csrf.js'
-import { isMachineBearerRequest, ProxyAssertion, requestFetchSite } from '../lib/access/security.js'
+import { isAnonymousKnowledgeShareRequest, isMachineBearerRequest, ProxyAssertion, requestFetchSite } from '../lib/access/security.js'
 import { SessionStore, expiredSessionCookie, sessionCookie, sessionCookieName } from '../lib/access/sessions.js'
 
 class MemoryCredentials {
@@ -86,6 +86,23 @@ test('only configured machine API prefixes accept bearer bypass', () => {
 
 test('unsafe broad machine prefixes are rejected', () => {
   assert.throws(() => resolveConfig({ machineBearerPrefixes: ['/api'] }), /too broad/u)
+})
+
+test('anonymous Knowledge shares allow only valid read-only share routes', () => {
+  const enabled = resolveConfig({ allowAnonymousKnowledgeShares: true })
+  const disabled = resolveConfig({ allowAnonymousKnowledgeShares: false })
+  const token = `share_${'x'.repeat(32)}`
+  const request = (url, method = 'GET') => ({ url, method, headers: {} })
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}`), enabled), true)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}/manifest?download=1`), enabled), true)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}/content?noteId=note_1`), enabled), true)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}`, 'POST'), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}`, 'DELETE'), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request('/knowledge-api/v1/shared'), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request('/knowledge-api/v1/search'), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v10/shared/${token}`), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request('/knowledge-api/v1/shared/share_short'), enabled), false)
+  assert.equal(isAnonymousKnowledgeShareRequest(request(`/knowledge-api/v1/shared/${token}`), disabled), false)
 })
 
 test('trusted origins are authoritative with a legacy migration fallback', () => {

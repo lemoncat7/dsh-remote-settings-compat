@@ -5,7 +5,7 @@ import type { Config } from './config.js'
 import { issueLoginCsrfToken, loginCsrfCookie, loginCsrfCookieName, verifyLoginCsrfToken } from './login-csrf.js'
 import { loginPage } from './login-page.js'
 import { PasswordStore } from './password.js'
-import { LoginLimiter, ProxyAssertion, clientIp, isMachineBearerRequest, requestFetchSite, requestOriginAllowed, safePathname } from './security.js'
+import { LoginLimiter, ProxyAssertion, clientIp, isAnonymousKnowledgeShareRequest, isMachineBearerRequest, requestFetchSite, requestOriginAllowed, safePathname } from './security.js'
 import { SessionStore, expiredSessionCookie, readCookie, sessionCookie, sessionCookieName, withoutCookie } from './sessions.js'
 
 const AUTH_PREFIX = '/__dsh_access'
@@ -121,7 +121,7 @@ export class AccessGateway {
     }
     if (pathname.startsWith(`${AUTH_PREFIX}/`)) return this.text(res, 404, 'not found')
 
-    if (isMachineBearerRequest(req, this.config)) return this.forward(req, res, false)
+    if (isAnonymousKnowledgeShareRequest(req, this.config) || isMachineBearerRequest(req, this.config)) return this.forward(req, res, false)
     const ip = clientIp(req, this.config)
     if (this.sessions.authenticate(readCookie(req.headers.cookie, this.cookieName), ip)) return this.forward(req, res, true)
     if (pathname.startsWith('/api/') || pathname.endsWith('.json')) return this.json(res, 401, { error: 'authentication required' })

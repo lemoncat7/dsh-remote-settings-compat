@@ -8,6 +8,7 @@ export interface Config {
   publicOrigins: string[]
   trustedProxyAddresses: string[]
   machineBearerPrefixes: string[]
+  allowAnonymousKnowledgeShares: boolean
   sessionTtlMinutes: number
   idleTimeoutMinutes: number
   maxFailedAttempts: number
@@ -23,6 +24,7 @@ export const ConfigSchema: Schema<Config> = Schema.object({
   publicOrigins: Schema.array(Schema.string()).default([]).description('旧版兼容字段。新版统一使用 remote-settings-compat.trustedOrigins，请在「远程访问」卡片中维护。'),
   trustedProxyAddresses: Schema.array(Schema.string()).default([]).description('可信反向代理的精确 IP；仅这些地址可提供真实客户端 IP。'),
   machineBearerPrefixes: Schema.array(Schema.string()).default(['/knowledge-api/v1']).description('允许携带 Bearer Token 独立鉴权的 API 前缀。'),
+  allowAnonymousKnowledgeShares: Schema.boolean().default(false).description('允许未登录访问 Knowledge 的有效分享链接；仅放行只读 GET，不开放其他知识库接口。'),
   sessionTtlMinutes: Schema.number().min(5).max(10080).default(720).description('登录会话最长有效时间（分钟）。'),
   idleTimeoutMinutes: Schema.number().min(1).max(1440).default(60).description('无操作自动退出时间（分钟）。'),
   maxFailedAttempts: Schema.number().min(3).max(20).default(5).description('同一来源连续失败次数上限。'),
@@ -39,6 +41,7 @@ export function resolveConfig(input: Partial<Config>): Config {
     publicOrigins: normalizeOrigins(input.publicOrigins ?? []),
     trustedProxyAddresses: normalizeAddresses(input.trustedProxyAddresses ?? []),
     machineBearerPrefixes: normalizePrefixes(input.machineBearerPrefixes ?? ['/knowledge-api/v1']),
+    allowAnonymousKnowledgeShares: input.allowAnonymousKnowledgeShares ?? false,
     sessionTtlMinutes: integer(input.sessionTtlMinutes ?? 720, 'sessionTtlMinutes', 5, 10080),
     idleTimeoutMinutes: integer(input.idleTimeoutMinutes ?? 60, 'idleTimeoutMinutes', 1, 1440),
     maxFailedAttempts: integer(input.maxFailedAttempts ?? 5, 'maxFailedAttempts', 3, 20),

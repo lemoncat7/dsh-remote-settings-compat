@@ -114,6 +114,14 @@ export function isMachineBearerRequest(req: IncomingMessage, config: Config): bo
   return token.length >= 24 && token.length <= 4096 && !/\s/u.test(token)
 }
 
+/** Allow only the public, immutable surface of a valid Knowledge share. */
+export function isAnonymousKnowledgeShareRequest(req: IncomingMessage, config: Config): boolean {
+  if (!config.allowAnonymousKnowledgeShares || req.method !== 'GET') return false
+  const pathname = safePathname(req.url)
+  if (pathname === undefined) return false
+  return /^\/knowledge-api\/v1\/shared\/share_[A-Za-z0-9_-]{32}(?:\/(?:manifest|content))?\/?$/u.test(pathname)
+}
+
 export function safePathname(raw: string | undefined): string | undefined {
   try { return new URL(raw ?? '/', 'http://dsh.internal').pathname } catch { return undefined }
 }

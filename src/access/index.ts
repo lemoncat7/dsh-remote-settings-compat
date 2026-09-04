@@ -41,6 +41,14 @@ export function apply(context: Context, base: AccessGateConfig): void {
   )
   const storedConfig = resolveConfig(scope.get())
   const config: AccessGateConfig = { ...storedConfig, publicOrigins: [] }
+  ctx.effect(
+    () => scope.watch(value => {
+      // This predicate is independent from the listening socket and sessions,
+      // so it is safe to update without rebuilding the gateway.
+      config.allowAnonymousKnowledgeShares = resolveConfig(value).allowAnonymousKnowledgeShares
+    }),
+    'dsh-access-gate: live anonymous Knowledge share setting',
+  )
   let legacyFallbackActive = ctx.remoteSettingsTrust.origins.length === 0 && storedConfig.publicOrigins.length > 0
   const syncOrigins = (): void => {
     const origins = resolveAccessOrigins(
