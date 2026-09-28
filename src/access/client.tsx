@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import cssText from './client.css'
+import { settingsSurfaceCss } from '../settings-surface.js'
 import type { Config } from './config.js'
 import type { RemoteSettingsValue } from '../client-settings.js'
 import { REMOTE_SETTINGS_NAMESPACE } from '../shared.js'
@@ -199,7 +200,7 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
   const diagnosticIssues = diagnostics === undefined || status === undefined ? [] : deploymentIssues(status, diagnostics)
   const summary = loadingStatus ? '检测中' : diagnosticIssues.some(issue => issue.severity === 'danger') ? '部署异常' : status?.gatewayRunning ? `运行于 ${status.listenPort}` : draft.enabled ? '等待重启' : '未启用'
 
-  return <li className={`dsh-access-gate-card${open ? ' is-open' : ''}`}>
+  return <li className={`dsh-plugin-settings dsh-access-gate-card${open ? ' is-open' : ''}`}>
     <button type="button" className="dsh-access-gate-header" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
       <span><strong>远程访问</strong><small>可信远程设置、密码门禁与机器 API 的统一入口</small></span>
       <span className="dsh-access-gate-summary"><i data-running={status?.gatewayRunning ? 'true' : 'false'} />{summary}<b aria-hidden="true" /></span>
@@ -417,7 +418,7 @@ function installStyles(): () => void {
   const style = document.createElement('style')
   style.dataset.plugin = PLUGIN_ID
   style.dataset.pluginCss = STYLE_ID
-  style.textContent = cssText
+  style.textContent = cssText + settingsSurfaceCss
   document.head.appendChild(style)
   return () => { style.remove() }
 }
