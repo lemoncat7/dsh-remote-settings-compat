@@ -1,5 +1,5 @@
-import type { Context } from '@deepseek-ai/cordis'
-import type { SettingsProvider } from '@deepseek-ai/dsh-settings'
+import type { Context, Volatile } from '@deepseek-ai/cordis'
+import type { SettingsForms } from '@deepseek-ai/dsh-settings'
 import Schema from '@deepseek-ai/schemastery'
 import {
   normalizeTrustedOrigins,
@@ -12,11 +12,11 @@ export interface Config {
   trustedOrigins: string[]
 }
 
-export const Config: Schema<Config> = Schema.object({
+export const Config = Schema.object({
   trustedOrigins: Schema.array(Schema.string())
     .default([])
     .description('允许使用模型与插件设置的完整浏览器 Origin，例如 https://dsh.example.com:1443。'),
-})
+}).volatile()
 
 export const name = 'dsh-remote-settings-compat'
 export const inject = ['settings', 'webServer']
@@ -38,37 +38,27 @@ interface WebServerLike {
 }
 
 interface RuntimeContextLike extends Context {
-  settings: SettingsProvider
+  settings: SettingsForms
   webServer?: WebServerLike
   get(name: 'webServer'): WebServerLike
 }
 
 /** Publish the resolved allowlist as inert page metadata before clients boot. */
-export function apply(ctx: Context, config: Config): void {
+export function apply(ctx: Context, config: Volatile<Config>): void {
   const runtime = ctx as RuntimeContextLike
-  let current = (): Config => config
-  const origins = normalizeTrustedOrigins(config.trustedOrigins)
+  const current = () => config.get()
+  const origins = normalizeTrustedOrigins(current().trustedOrigins)
   const authorities = trustedAuthorities(origins)
   const listeners = new Set<() => void>()
 
-  const refreshAuthorities = (): void => {
-    const nextOrigins = normalizeTrustedOrigins(current().trustedOrigins)
-    origins.splice(0, origins.length, ...nextOrigins)
-    authorities.splice(0, authorities.length, ...trustedAuthorities(nextOrigins))
+  ctx.effect(() => runtime.settings.configure({ auto: false }))
+  ctx.on('settings/document-updated', ns => {
+    if (ns !== REMOTE_SETTINGS_NAMESPACE) return
+    const next = normalizeTrustedOrigins(current().trustedOrigins)
+    origins.splice(0, origins.length, ...next)
+    authorities.splice(0, authorities.length, ...trustedAuthorities(next))
     for (const listener of listeners) listener()
-  }
-
-  runtime.settings.installSection(
-    ctx,
-    REMOTE_SETTINGS_NAMESPACE,
-    Config,
-    config,
-    {
-      setSource(source) { current = source },
-      onChange() { refreshAuthorities() },
-      validate(value) { normalizeTrustedOrigins(value.trustedOrigins) },
-    },
-  )
+  })
 
   ctx.provide('remoteSettingsTrust', {
     origins,

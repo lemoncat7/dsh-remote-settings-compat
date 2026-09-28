@@ -1,35 +1,24 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import cssText from './client.css'
 import type { Config } from './config.js'
-import { decodeRemoteSettingsValue, type RemoteSettingsValue } from '../client-settings.js'
+import type { RemoteSettingsValue } from '../client-settings.js'
 import { REMOTE_SETTINGS_NAMESPACE } from '../shared.js'
+import type { ConfigForm, ConfigForms } from '@deepseek-ai/dsh-client-ui-settings/client'
 
 const PLUGIN_ID = '@lemoncat7/dsh-remote-settings-compat'
-const NAMESPACE = 'dsh-access-gate'
+const NAMESPACE = 'remote-access-gate'
 const ADMIN_PREFIX = '/access-gate-admin/v1'
 const DIAGNOSTICS_PATH = '/api/remote-access-diagnostics/v1/request'
 const STYLE_ID = `${PLUGIN_ID}/remote-access-settings`
 
-interface SettingsSnapshot<T> {
-  status: 'loading' | 'ready' | 'unavailable'
-  value: T | undefined
-  writable: boolean
-}
-
-interface SettingsScope<T> {
-  getSnapshot(): SettingsSnapshot<T>
-  subscribe(listener: () => void): () => void
-  set(field: string, value: unknown): Promise<void>
-}
+type SettingsScope<T> = ConfigForm<T>
 
 export interface RemoteAccessUiContext {
   slots: {
     inject(name: string, register: () => unknown): unknown
     register(options: Record<string, unknown>, component: () => JSX.Element): unknown
   }
-  settingsScope: {
-    bind<T>(spec: { namespace: string; decode(value: unknown): T | undefined }): SettingsScope<T>
-  }
+  configForms: Pick<ConfigForms, 'get'>
   effect(setup: () => void | (() => void), label?: string): unknown
 }
 
@@ -75,15 +64,16 @@ interface DiagnosticIssue {
   detail: string
 }
 
-export const inject = ['slots', 'settingsScope']
+export const inject = ['slots', 'configForms']
 
 export function apply(ctx: RemoteAccessUiContext): void {
-  const gateScope = ctx.settingsScope.bind<Config>({ namespace: NAMESPACE, decode: decodeConfig })
-  const remoteScope = ctx.settingsScope.bind<RemoteSettingsValue>({ namespace: REMOTE_SETTINGS_NAMESPACE, decode: decodeRemoteSettingsValue })
+  const gateScope = ctx.configForms.get<Config>(NAMESPACE)
+  const remoteScope = ctx.configForms.get<RemoteSettingsValue>(REMOTE_SETTINGS_NAMESPACE)
   ctx.effect(installStyles, 'remote-access: settings styles')
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    key: REMOTE_SETTINGS_NAMESPACE,
+  ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
+    name: 'settings.plugins.tab',
+    id: 'lemoncat7-remote-access',
+    label: () => '远程访问',
   }, () => <RemoteAccessCard gateScope={gateScope} remoteScope={remoteScope} />))
 }
 
@@ -157,10 +147,11 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
     setSaving(true)
     setMessage(undefined)
     try {
-      if (remoteDirty) await remoteScope.set('trustedOrigins', draft.publicOrigins)
       const changed = gateFields.filter(field => JSON.stringify(draft[field]) !== JSON.stringify(config?.[field]))
-      for (const field of changed) await gateScope.set(field, draft[field])
-      if (migrationPending) await gateScope.set('publicOrigins', [])
+      const ops: Parameters<ConfigForm<Config>['mutate']>[0][number][] = changed.map(field => ({ op: 'set' as const, path: [field], value: draft[field] }))
+      if (migrationPending) ops.push({ op: 'set', path: ['publicOrigins'], value: [] })
+      if (ops.length && !await gateScope.mutate(ops)) throw new Error('配置未保存，请刷新后重试')
+      if (remoteDirty && !await remoteScope.set('trustedOrigins', draft.publicOrigins)) throw new Error('可信地址未保存，请刷新后重试')
       setMessage({ kind: 'success', text: '远程访问配置已保存。可信地址和匿名分享立即生效；网关监听设置在重启 DSH 后生效。' })
     } catch (error) {
       setMessage({ kind: 'error', text: errorMessage(error) })
@@ -352,13 +343,6 @@ function ToggleRow({ label, help, checked, disabled, compact = false, onChange }
 
 function Switch({ ariaLabel, checked, disabled, onChange }: { ariaLabel: string; checked: boolean; disabled: boolean; onChange(value: boolean): void }) {
   return <label className="dsh-access-gate-switch"><input aria-label={ariaLabel} type="checkbox" checked={checked} disabled={disabled} onChange={event => { onChange(event.target.checked) }} /><span aria-hidden="true" /></label>
-}
-
-function decodeConfig(value: unknown): Config | undefined {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined
-  const item = value as Partial<Config>
-  if (typeof item.enabled !== 'boolean' || (item.listenHost !== '127.0.0.1' && item.listenHost !== '0.0.0.0') || typeof item.listenPort !== 'number') return undefined
-  return { ...defaultConfig(), ...item }
 }
 
 function defaultConfig(): Config {

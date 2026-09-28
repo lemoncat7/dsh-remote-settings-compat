@@ -1,7 +1,7 @@
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context, Volatile } from '@deepseek-ai/cordis'
 import type { CredentialProvider } from '@deepseek-ai/dsh-credentials'
 import type { HostConnectionHandle } from '@deepseek-ai/dsh-client-connection'
-import type { SettingsProvider } from '@deepseek-ai/dsh-settings'
+import type { SettingsForms } from '@deepseek-ai/dsh-settings'
 import type { RemoteSettingsTrust } from '../index.js'
 import { registerAdminApi, createSetupToken } from './admin-api.js'
 import { ConfigSchema, resolveAccessOrigins, resolveConfig, type Config as AccessGateConfig } from './config.js'
@@ -10,16 +10,17 @@ import { AccessGateway } from './gateway.js'
 import { PasswordStore } from './password.js'
 import { LoginLimiter, ProxyAssertion } from './security.js'
 import { SessionStore } from './sessions.js'
+import { accessRuntimeConfig } from './runtime-config.js'
 
-export const Config = ConfigSchema
-export type Config = AccessGateConfig
+export const Config = ConfigSchema.volatile()
+export type Config = Volatile<AccessGateConfig>
 export const name = 'dsh-access-gate'
 export const inject = ['connection', 'credentials', 'settings', 'webServer', 'remoteSettingsTrust']
 
 interface RuntimeContext extends Context {
   credentials: CredentialProvider
   connection: HostConnectionHandle
-  settings: SettingsProvider
+  settings: SettingsForms
   remoteSettingsTrust: RemoteSettingsTrust
   webServer: {
     host: string
@@ -32,23 +33,12 @@ interface RuntimeContext extends Context {
   }
 }
 
-export function apply(context: Context, base: AccessGateConfig): void {
+export function apply(context: Context, base: Config): void {
   const ctx = context as RuntimeContext
-  const scope = ctx.settings.register(
-    'dsh-access-gate',
-    ConfigSchema,
-    { base, applies: 'restart', validate: value => { resolveConfig(value) } },
-  )
-  const storedConfig = resolveConfig(scope.get())
-  const config: AccessGateConfig = { ...storedConfig, publicOrigins: [] }
-  ctx.effect(
-    () => scope.watch(value => {
-      // This predicate is independent from the listening socket and sessions,
-      // so it is safe to update without rebuilding the gateway.
-      config.allowAnonymousKnowledgeShares = resolveConfig(value).allowAnonymousKnowledgeShares
-    }),
-    'dsh-access-gate: live anonymous Knowledge share setting',
-  )
+  ctx.effect(() => ctx.settings.configure({ auto: false }))
+  const storedConfig = resolveConfig(structuredClone(base.get()) as AccessGateConfig)
+  const config = accessRuntimeConfig(base)
+  config.publicOrigins = []
   let legacyFallbackActive = ctx.remoteSettingsTrust.origins.length === 0 && storedConfig.publicOrigins.length > 0
   const syncOrigins = (): void => {
     const origins = resolveAccessOrigins(

@@ -46,7 +46,7 @@ export function apply(ctx: ClientContextLike): void {
     }, 'remote-settings-compat: classify trusted page origin')
   })
 
-  ctx.inject(['slots', 'settingsScope'], injected => {
+  ctx.inject(['slots', 'configForms'], injected => {
     applyRemoteAccessSettings(injected as RemoteAccessUiContext)
   })
 }
