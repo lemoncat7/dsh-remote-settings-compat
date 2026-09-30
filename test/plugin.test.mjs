@@ -76,9 +76,10 @@ test('settings editor accepts one exact origin per line', () => {
 test('bundle composes settings compatibility and access gateway without executable YAML', () => {
   const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-  assert.match(patch, /id:\s*ui-settings[\s\S]*disabled:\s*true/)
+  assert.match(patch, /id:\s*ui-settings[\s\S]*disabled:\s*false[\s\S]*inject:[\s\S]*remoteSettingsTrust/)
   assert.match(patch, /id:\s*connection[\s\S]*disabled:\s*true/)
-  assert.match(patch, /id:\s*remote-settings-compat[\s\S]*id:\s*connection-after-remote-compat[\s\S]*id:\s*remote-access-gate[\s\S]*id:\s*ui-settings-after-remote-compat/)
+  assert.match(patch, /id:\s*remote-settings-compat[\s\S]*id:\s*connection-after-remote-compat[\s\S]*id:\s*remote-access-gate/)
+  assert.doesNotMatch(patch, /ui-settings-after-remote-compat/)
   assert.doesNotMatch(patch, /remote-settings-rpc/)
   assert.doesNotMatch(patch, /!!js|ctx\./)
   assert.equal(pkg.exports['./connection'].default, './lib/connection.js')

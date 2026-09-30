@@ -1,6 +1,6 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "homepage": "https://github.com/lemoncat7/dsh-remote-settings-compat#readme",
   "bugs": {
@@ -44,7 +44,7 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "docs/releases/0.6.2.md",
+    "docs/releases/0.6.3.md",
     "lib/**/*.js",
     "lib/**/*.d.ts",
     "lib/**/*.map",

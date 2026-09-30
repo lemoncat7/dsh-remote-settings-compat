@@ -1,12 +1,12 @@
 # DSH Remote Access
 
-> 当前版本 **0.6.2**，已验证宿主 **DSH 0.2.0-rc.2**（宿主仍为 RC）。Node.js **^22.19.0 或 >=24.0.0**。详见 [兼容说明](docs/dsh-020-compatibility.md) 和 [发布说明](docs/releases/0.6.2.md)。
+> 当前版本 **0.6.3**，已验证宿主 **DSH 0.2.0-rc.2**（宿主仍为 RC）。Node.js **^22.19.0 或 >=24.0.0**。详见 [兼容说明](docs/dsh-020-compatibility.md) 和 [发布说明](docs/releases/0.6.3.md)。
 
 `@lemoncat7/dsh-remote-settings-compat` 是 DeepSeek Harness 的统一远程访问插件。它把可信远程设置和密码访问网关收敛到一个安装包、一个设置入口，同时保持各模块独立、可审计。
 
 ## 兼容性
 
-正式版 `0.6.2` 针对 DeepSeek Harness `0.2.0-rc.2` 构建并完成部署验证，需要 Node.js `22.19+` 或 `24+`。插件直接使用该版本的 Connection、Credentials 与 Settings 服务接口。
+正式版 `0.6.3` 针对 DeepSeek Harness `0.2.0-rc.2` 构建并完成部署验证，需要 Node.js `22.19+` 或 `24+`。插件直接使用该版本的 Connection、Credentials 与 Settings 服务接口。
 
 ## 能力
 
