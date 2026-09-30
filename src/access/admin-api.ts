@@ -81,12 +81,14 @@ async function dispatch(runtime: AdminRuntime, req: IncomingMessage, res: Server
     }
     await runtime.passwords.set(password)
     runtime.sessions.invalidateAll()
+    await runtime.sessions.flush()
     return sendJson(res, 200, { ok: true, sessionsRevoked: true })
   }
   if (req.method === 'POST' && relative === 'sessions/revoke') {
     requireMutation(req)
     requireTrustedAdmin(runtime, req)
     runtime.sessions.invalidateAll()
+    await runtime.sessions.flush()
     return sendJson(res, 200, { ok: true })
   }
   sendJson(res, 404, { error: 'not found' })

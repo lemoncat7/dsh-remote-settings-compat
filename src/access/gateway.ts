@@ -117,7 +117,7 @@ export class AccessGateway {
     if (pathname === `${AUTH_PREFIX}/logout` && req.method === 'POST') return this.logout(req, res)
     if (pathname === `${AUTH_PREFIX}/status` && req.method === 'GET') {
       const ip = clientIp(req, this.config)
-      return this.json(res, 200, { authenticated: this.sessions.authenticate(readCookie(req.headers.cookie, this.cookieName), ip) })
+      return this.json(res, 200, { gateway: 'dsh-access-gate', authenticated: this.sessions.authenticate(readCookie(req.headers.cookie, this.cookieName), ip, Date.now(), false) })
     }
     if (pathname.startsWith(`${AUTH_PREFIX}/`)) return this.text(res, 404, 'not found')
 
@@ -165,6 +165,10 @@ export class AccessGateway {
     }
     this.limiter.success(ip)
     const session = this.sessions.issue(ip)
+    try { await this.sessions.flush() } catch (error) {
+      this.sessions.invalidate(session.token)
+      throw error
+    }
     const maxAge = Math.max(1, Math.floor((session.expiresAt - Date.now()) / 1000))
     const origin = requestOrigin(req, this.config)
     if (origin === undefined) return this.text(res, 400, 'public origin is not configured for this request')
@@ -192,9 +196,10 @@ export class AccessGateway {
     return allowed
   }
 
-  private logout(req: IncomingMessage, res: ServerResponse): void {
+  private async logout(req: IncomingMessage, res: ServerResponse): Promise<void> {
     if (!requestOriginAllowed(req, this.config)) return this.text(res, 403, 'forbidden')
     this.sessions.invalidate(readCookie(req.headers.cookie, this.cookieName))
+    await this.sessions.flush()
     res.writeHead(303, securityHeaders({
       location: `${AUTH_PREFIX}/login`,
       'set-cookie': expiredSessionCookie(this.config.secureCookies),

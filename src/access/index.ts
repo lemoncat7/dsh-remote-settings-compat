@@ -10,6 +10,7 @@ import { AccessGateway } from './gateway.js'
 import { PasswordStore } from './password.js'
 import { LoginLimiter, ProxyAssertion } from './security.js'
 import { SessionStore } from './sessions.js'
+import { credentialSessionPersistence } from './session-persistence.js'
 import { accessRuntimeConfig } from './runtime-config.js'
 
 export const Config = ConfigSchema.volatile()
@@ -55,7 +56,7 @@ export function apply(context: Context, base: Config): void {
     ttlMs: config.sessionTtlMinutes * 60_000,
     idleMs: config.idleTimeoutMinutes * 60_000,
     bindToIp: config.bindSessionToIp,
-  })
+  }, credentialSessionPersistence(ctx.credentials))
   const limiter = new LoginLimiter(config.maxFailedAttempts, config.lockoutMinutes * 60_000)
   const assertion = new ProxyAssertion()
   const gateway = new AccessGateway(config, ctx.webServer.port, passwords, sessions, limiter, assertion, ctx.connection, ctx.logger)
@@ -111,7 +112,16 @@ export function apply(context: Context, base: Config): void {
     if (config.listenHost === '0.0.0.0' && config.publicOrigins.length === 0) {
       throw new Error('trustedOrigins must contain at least one exact origin when the access gate listens on 0.0.0.0')
     }
+    await sessions.restore()
     await gateway.start()
-    return () => gateway.close()
+    const timer = setInterval(() => {
+      void sessions.flush().catch(() => ctx.logger.warn('dsh-access-gate: session persistence failed; will retry'))
+    }, 5_000)
+    timer.unref()
+    return async () => {
+      clearInterval(timer)
+      await gateway.close()
+      await sessions.flush()
+    }
   }, 'dsh-access-gate: gateway')
 }

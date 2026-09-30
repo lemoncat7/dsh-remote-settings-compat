@@ -8,13 +8,14 @@ import {
   type ConnectionLike,
 } from './client-core.js'
 import { apply as applyRemoteAccessSettings, type RemoteAccessUiContext } from './access/client.js'
+import { watchGateAuthentication, type RecoveryConnection } from './access/auth-recovery.js'
 
 interface ClientContextLike {
   inject(names: string[], callback: (ctx: unknown) => void): unknown
 }
 
 interface ConnectionClientContext {
-  get(name: 'connection'): ConnectionLike
+  get(name: 'connection'): ConnectionLike & RecoveryConnection
   effect(setup: () => void | (() => void), label?: string): unknown
 }
 
@@ -37,9 +38,11 @@ export function apply(ctx: ClientContextLike): void {
       if (!isTrustedOrigin(location.origin, origins)) return
 
       const connection = connectionCtx.get('connection')
+      const stopRecovery = watchGateAuthentication(connection)
       const restore = overrideLoopbackClassification(connection)
       document.documentElement.setAttribute(TRUSTED_SETTINGS_ATTRIBUTE, location.origin)
       return () => {
+        stopRecovery()
         restore()
         document.documentElement.removeAttribute(TRUSTED_SETTINGS_ATTRIBUTE)
       }

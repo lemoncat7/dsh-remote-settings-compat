@@ -8,7 +8,7 @@ export function sessionCookieName(secure: boolean): string {
   return secure ? SECURE_SESSION_COOKIE : INSECURE_SESSION_COOKIE
 }
 
-interface SessionRecord {
+export interface SessionRecord {
   digest: string
   createdAt: number
   lastSeenAt: number
@@ -24,8 +24,44 @@ export interface SessionPolicy {
 
 export class SessionStore {
   private readonly sessions = new Map<string, SessionRecord>()
+  private revision = 0
+  private savedRevision = 0
+  private writing: Promise<void> = Promise.resolve()
 
-  constructor(private readonly policy: SessionPolicy) {}
+  constructor(private readonly policy: SessionPolicy, private readonly persistence?: {
+    load(): Promise<unknown>
+    save(records: SessionRecord[]): Promise<void>
+  }) {}
+
+  async restore(now = Date.now()): Promise<void> {
+    if (!this.persistence) return
+    const records = await this.persistence.load()
+    this.sessions.clear()
+    if (Array.isArray(records) && records.length <= 64) {
+      for (const record of records) {
+        if (!record || typeof record.digest !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(record.digest)
+          || !Number.isSafeInteger(record.createdAt) || !Number.isSafeInteger(record.lastSeenAt)
+          || !Number.isSafeInteger(record.expiresAt) || record.createdAt > record.lastSeenAt
+          || record.lastSeenAt > now || record.expiresAt <= record.createdAt
+          || (record.ip !== undefined && typeof record.ip !== 'string')
+          || (this.policy.bindToIp && typeof record.ip !== 'string')) continue
+        this.sessions.set(record.digest, { ...record, expiresAt: Math.min(record.expiresAt, record.createdAt + this.policy.ttlMs) })
+      }
+    }
+    this.prune(now)
+  }
+
+  /** Serialize snapshots; failed writes remain dirty and can be retried. */
+  flush(): Promise<void> {
+    const next = this.writing.catch(() => {}).then(async () => {
+      if (!this.persistence || this.savedRevision === this.revision) return
+      const revision = this.revision
+      await this.persistence.save([...this.sessions.values()].map(record => ({ ...record })))
+      this.savedRevision = revision
+    })
+    this.writing = next
+    return next
+  }
 
   issue(ip: string, now = Date.now()): { token: string; expiresAt: number } {
     this.prune(now)
@@ -44,30 +80,35 @@ export class SessionStore {
       expiresAt,
       ...(this.policy.bindToIp ? { ip } : {}),
     })
+    this.revision++
     return { token, expiresAt }
   }
 
-  authenticate(token: string | undefined, ip: string, now = Date.now()): boolean {
+  authenticate(token: string | undefined, ip: string, now = Date.now(), touch = true): boolean {
     if (token === undefined || token.length < 32 || token.length > 256) return false
     const digest = tokenDigest(token)
     const record = this.sessions.get(digest)
     if (record === undefined) return false
     if (record.expiresAt <= now || now - record.lastSeenAt > this.policy.idleMs || (record.ip !== undefined && record.ip !== ip)) {
       this.sessions.delete(digest)
+      this.revision++
       return false
     }
+    if (!touch) return true
     record.lastSeenAt = now
+    this.revision++
     this.sessions.delete(digest)
     this.sessions.set(digest, record)
     return true
   }
 
   invalidate(token: string | undefined): void {
-    if (token !== undefined) this.sessions.delete(tokenDigest(token))
+    if (token !== undefined && this.sessions.delete(tokenDigest(token))) this.revision++
   }
 
   invalidateAll(): void {
     this.sessions.clear()
+    this.revision++
   }
 
   count(now = Date.now()): number {
@@ -77,7 +118,10 @@ export class SessionStore {
 
   private prune(now: number): void {
     for (const [digest, record] of this.sessions) {
-      if (record.expiresAt <= now || now - record.lastSeenAt > this.policy.idleMs) this.sessions.delete(digest)
+      if (record.expiresAt <= now || now - record.lastSeenAt > this.policy.idleMs) {
+        this.sessions.delete(digest)
+        this.revision++
+      }
     }
   }
 }

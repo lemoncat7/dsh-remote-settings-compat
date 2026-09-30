@@ -1,6 +1,6 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "homepage": "https://github.com/lemoncat7/dsh-remote-settings-compat#readme",
   "bugs": {
@@ -44,13 +44,15 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "docs/releases/0.6.2.md",
     "lib/**/*.js",
     "lib/**/*.d.ts",
     "lib/**/*.map",
     "cordis.patch.yml",
     "README.md",
     "LICENSE",
-    "docs/releases/0.6.1.md"
+    "docs/releases/0.6.1.md",
+    "docs/dsh-020-compatibility.md"
   ],
   "dsh": {
     "bundle": {
@@ -73,9 +75,9 @@
     "pack:check": "npm pack --dry-run"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-client-connection": "0.1.7-rc.2",
-    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2",
-    "@deepseek-ai/dsh-settings": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-settings": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "~3.18.4",
     "http-proxy": "^1.18.1"
   },
@@ -91,7 +93,7 @@
     "esbuild": "^0.25.0",
     "react": "^18.3.1",
     "typescript": "^5.9.3",
-    "@deepseek-ai/dsh-client-ui-settings": "0.1.7-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
     "@types/http-proxy": "^1.17.16"
   },
   "publishConfig": {
