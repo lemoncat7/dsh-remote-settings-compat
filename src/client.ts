@@ -3,33 +3,25 @@ import {
   TRUSTED_SETTINGS_ATTRIBUTE,
 } from './shared.js'
 import {
-  overrideLoopbackClassification,
   readTrustedOrigins,
-  type ConnectionLike,
 } from './client-core.js'
 import { apply as applyRemoteAccessSettings, type RemoteAccessUiContext } from './access/client.js'
 import { watchGateAuthentication, type RecoveryConnection } from './access/auth-recovery.js'
+import { watchPageResume } from './page-resume.js'
 
 interface ClientContextLike {
   inject(names: string[], callback: (ctx: unknown) => void): unknown
 }
 
 interface ConnectionClientContext {
-  get(name: 'connection'): ConnectionLike & RecoveryConnection
+  get(name: 'connection'): RecoveryConnection
   effect(setup: () => void | (() => void), label?: string): unknown
 }
 
 export const inject: string[] = []
 
-interface OfficialConnectionModule {
-  apply(ctx: unknown): void
-}
-
-/** Mark only an explicitly configured page origin before ui-settings boots. */
+/** Use the host's native remote settings; observe gateway expiry for trusted pages. */
 export function apply(ctx: ClientContextLike): void {
-  const officialConnection = require('@deepseek-ai/dsh-client-connection') as OfficialConnectionModule
-  officialConnection.apply(ctx)
-
   ctx.inject(['connection'], injected => {
     const connectionCtx = injected as ConnectionClientContext
     connectionCtx.effect(() => {
@@ -39,11 +31,11 @@ export function apply(ctx: ClientContextLike): void {
 
       const connection = connectionCtx.get('connection')
       const stopRecovery = watchGateAuthentication(connection)
-      const restore = overrideLoopbackClassification(connection)
+      const stopResume = watchPageResume(connection)
       document.documentElement.setAttribute(TRUSTED_SETTINGS_ATTRIBUTE, location.origin)
       return () => {
         stopRecovery()
-        restore()
+        stopResume()
         document.documentElement.removeAttribute(TRUSTED_SETTINGS_ATTRIBUTE)
       }
     }, 'remote-settings-compat: classify trusted page origin')

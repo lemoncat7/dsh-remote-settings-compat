@@ -13,7 +13,7 @@ DeepSeek Harness 的远程访问插件，将可信浏览器来源配置和独立
 
 ## 安装
 
-适配 DeepSeek Harness **0.2.0-rc.2**（宿主仍为 RC），需要 Node.js **^22.19.0 或 >=24.0.0**。其他宿主版本请先查阅[兼容说明](docs/dsh-020-compatibility.md)和对应版本的发布说明。
+适配 DeepSeek Harness **0.2.1-rc.2**（宿主仍为 RC），需要 Node.js **^22.19.0 或 >=24.0.0**。其他宿主版本请先查阅[兼容说明](docs/dsh-021-compatibility.md)和对应版本的发布说明。
 
 ```bash
 dsh plugin --profile web add @lemoncat7/dsh-remote-settings-compat@latest

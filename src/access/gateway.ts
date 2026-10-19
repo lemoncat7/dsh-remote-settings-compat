@@ -7,6 +7,7 @@ import { loginPage } from './login-page.js'
 import { PasswordStore } from './password.js'
 import { LoginLimiter, ProxyAssertion, clientIp, isAnonymousKnowledgeShareRequest, isMachineBearerRequest, requestFetchSite, requestOriginAllowed, safePathname } from './security.js'
 import { SessionStore, expiredSessionCookie, readCookie, sessionCookie, sessionCookieName, withoutCookie } from './sessions.js'
+import { hashedAssetCachePolicy } from '../browser-resources.js'
 
 const AUTH_PREFIX = '/__dsh_access'
 const MAX_LOGIN_BODY = 16 * 1024
@@ -31,7 +32,7 @@ export class AccessGateway {
 
   constructor(
     private readonly config: Config,
-    private readonly upstreamPort: number,
+    private readonly upstreamOrigin: () => string,
     private readonly passwords: PasswordStore,
     private readonly sessions: SessionStore,
     private readonly limiter: LoginLimiter,
@@ -39,6 +40,10 @@ export class AccessGateway {
     private readonly connection: Pick<HostConnectionHandle, 'authenticatedUrl'>,
     private readonly logger: GatewayLogger,
   ) {
+    this.proxy.on('proxyRes', (upstream, req) => {
+      const policy = hashedAssetCachePolicy(req.method, req.url, upstream.statusCode, upstream.headers)
+      if (policy) upstream.headers['cache-control'] = policy
+    })
     this.proxy.on('error', (error, _req, target) => {
       const response = target as ServerResponse
       if (typeof response.writeHead === 'function' && !response.headersSent) {
@@ -105,7 +110,9 @@ export class AccessGateway {
   }
 
   private get target(): string {
-    return `http://127.0.0.1:${this.upstreamPort}`
+    // The official listener may bind after plugin activation (including port 0).
+    // Resolve for each request, never capture an undefined port at construction.
+    return this.upstreamOrigin()
   }
 
   private async handle(req: IncomingMessage, res: ServerResponse): Promise<void> {

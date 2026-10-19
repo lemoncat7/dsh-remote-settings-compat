@@ -8,7 +8,7 @@ import { SessionStore } from '../lib/access/sessions.js'
 import { credentialSessionPersistence } from '../lib/access/session-persistence.js'
 import { LoginLimiter, ProxyAssertion } from '../lib/access/security.js'
 
-test('HTTP login persists before response; restart accepts cookie; logout rejects after restart', async () => {
+test('late-bound upstream supports login, durable cookies and logout across gateway restarts', async () => {
   const records = new Map()
   const credentials = {
     async readRecord(key) { return structuredClone(records.get(String(key))) },
@@ -17,7 +17,6 @@ test('HTTP login persists before response; restart accepts cookie; logout reject
   const passwords = new PasswordStore(credentials)
   await passwords.set('gateway-test-password')
   const upstream = createServer((_req, res) => res.end('upstream'))
-  await new Promise(resolve => upstream.listen(0, '127.0.0.1', resolve))
   const reservation = createServer()
   await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve))
   const port = reservation.address().port
@@ -28,8 +27,9 @@ test('HTTP login persists before response; restart accepts cookie; logout reject
   async function start() {
     const sessions = new SessionStore({ ttlMs: 60_000, idleMs: 30_000, bindToIp: false }, credentialSessionPersistence(credentials))
     await sessions.restore()
-    gateway = new AccessGateway(config, upstream.address().port, passwords, sessions,
+    gateway = new AccessGateway(config, () => `http://127.0.0.1:${upstream.address().port}`, passwords, sessions,
       new LoginLimiter(5, 60_000), new ProxyAssertion(), { authenticatedUrl: () => base }, { info() {}, warn() {} })
+    if (!upstream.listening) await new Promise(resolve => upstream.listen(0, '127.0.0.1', resolve))
     await gateway.start()
   }
   try {

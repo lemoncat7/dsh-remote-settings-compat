@@ -5,7 +5,6 @@ import {
   injectTrustedOriginsMeta,
 } from '../lib/index.js'
 import {
-  overrideLoopbackClassification,
   readTrustedOrigins,
 } from '../lib/client-core.js'
 import {
@@ -49,12 +48,10 @@ test('host publishes inert escaped metadata and the client reads it', () => {
   assert.deepEqual(origins, ['https://dsh.example.com:1443'])
 })
 
-test('loopback compatibility override is reversible', () => {
-  const connection = { isLoopback: false }
-  const restore = overrideLoopbackClassification(connection)
-  assert.equal(connection.isLoopback, true)
-  restore()
-  assert.equal(connection.isLoopback, false)
+test('native remote settings no longer require changing the connection trust classification', () => {
+  const client = readFileSync(new URL('../src/client.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(client, /overrideLoopbackClassification|isLoopback/)
+  assert.match(client, /watchGateAuthentication/)
 })
 
 test('settings editor accepts one exact origin per line', () => {
@@ -73,23 +70,24 @@ test('settings editor accepts one exact origin per line', () => {
   assert.equal(decodeRemoteSettingsValue({ trustedOrigins: ['*'] }), undefined)
 })
 
-test('bundle composes settings compatibility and access gateway without executable YAML', () => {
+test('bundle augments native connection policy without attempting to rename its module', () => {
   const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   assert.match(patch, /id:\s*ui-settings[\s\S]*disabled:\s*false[\s\S]*inject:[\s\S]*remoteSettingsTrust/)
-  assert.match(patch, /id:\s*connection[\s\S]*disabled:\s*true/)
-  assert.match(patch, /id:\s*remote-settings-compat[\s\S]*id:\s*connection-after-remote-compat[\s\S]*id:\s*remote-access-gate/)
+  assert.match(patch, /id:\s*connection[\s\S]*name:\s*'@deepseek-ai\/dsh-client-connection'[\s\S]*disabled:\s*false/)
+  assert.match(patch, /id:\s*remote-settings-compat[\s\S]*id:\s*remote-access-gate/)
+  assert.doesNotMatch(patch, /connection-after-remote-compat/)
   assert.doesNotMatch(patch, /ui-settings-after-remote-compat/)
   assert.doesNotMatch(patch, /remote-settings-rpc/)
-  assert.doesNotMatch(patch, /!!js|ctx\./)
-  assert.equal(pkg.exports['./connection'].default, './lib/connection.js')
+  assert.match(patch, /ctx\.webStartup\.trustedHosts[\s\S]*ctx\.remoteSettingsTrust\.authorities/)
+  assert.equal(pkg.exports['./connection'], undefined)
   assert.equal(pkg.exports['./rpc'], undefined)
   assert.equal(pkg.exports['./access'].default, './lib/access/index.js')
   assert.equal(pkg.dsh.client.immediately, true)
-  assert.deepEqual(pkg.dsh.client.inject, [])
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-client-connection'], '0.2.0-rc.2')
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-settings'], '0.2.0-rc.2')
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-credentials'], '0.2.0-rc.2')
+  assert.deepEqual(pkg.dsh.client.inject, ['@deepseek-ai/dsh-client-connection'])
+  assert.equal(pkg.dependencies['@deepseek-ai/dsh-client-connection'], '0.2.1-rc.2')
+  assert.equal(pkg.dependencies['@deepseek-ai/dsh-settings'], '0.2.1-rc.2')
+  assert.equal(pkg.dependencies['@deepseek-ai/dsh-credentials'], '0.2.1-rc.2')
   assert.equal(pkg.dependencies['http-proxy'], '^1.18.1')
   assert.equal(pkg.dependencies['@lemoncat7/dsh-access-gate'], undefined)
 })

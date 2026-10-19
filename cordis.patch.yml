@@ -1,8 +1,11 @@
-# DSH 0.1.2 authenticates every browser RPC and keeps remote settings in memory
-# by default. Recreate its official Connection with the deployment authorities,
-# then classify only explicitly trusted browser origins before ui-settings boots.
+# name in a DSH patch is an identity guard, NOT a module replacement.
+# Keep the official Connection and supply its exact deployment authorities.
 - id: connection
-  disabled: true
+  name: '@deepseek-ai/dsh-client-connection'
+  disabled: false
+  inject: [webStartup, remoteSettingsTrust]
+  config:
+    trustedHosts: !!js "[...new Set([...ctx.webStartup.trustedHosts, ...ctx.remoteSettingsTrust.authorities])]"
 
 - id: ui-settings
   # Keep the official settings namespace used by developerTools.setEnabled().
@@ -15,9 +18,6 @@
       name: '@lemoncat7/dsh-remote-settings-compat'
       config:
         trustedOrigins: []
-
-    - id: connection-after-remote-compat
-      name: '@lemoncat7/dsh-remote-settings-compat/connection'
 
     - id: remote-access-gate
       name: '@lemoncat7/dsh-remote-settings-compat/access'

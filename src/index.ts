@@ -1,6 +1,8 @@
 import type { Context, Volatile } from '@deepseek-ai/cordis'
 import type { SettingsForms } from '@deepseek-ai/dsh-settings'
 import Schema from '@deepseek-ai/schemastery'
+import { refreshNativeConnection } from './connection.js'
+import { withManifestCredentials } from './browser-resources.js'
 import {
   normalizeTrustedOrigins,
   REMOTE_SETTINGS_NAMESPACE,
@@ -55,9 +57,11 @@ export function apply(ctx: Context, config: Volatile<Config>): void {
   ctx.on('settings/document-updated', ns => {
     if (ns !== REMOTE_SETTINGS_NAMESPACE) return
     const next = normalizeTrustedOrigins(current().trustedOrigins)
+    if (JSON.stringify(next) === JSON.stringify(origins)) return
     origins.splice(0, origins.length, ...next)
     authorities.splice(0, authorities.length, ...trustedAuthorities(next))
     for (const listener of listeners) listener()
+    refreshNativeConnection(ctx.get('loader'))
   })
 
   ctx.provide('remoteSettingsTrust', {
@@ -72,7 +76,7 @@ export function apply(ctx: Context, config: Volatile<Config>): void {
   const webServer = runtime.webServer ?? runtime.get('webServer')
   ctx.effect(
     () => webServer.tapIndex(html => injectTrustedOriginsMeta(
-      html,
+      withManifestCredentials(html),
       normalizeTrustedOrigins(current().trustedOrigins),
     )),
     'remote-settings-compat: publish trusted origins',

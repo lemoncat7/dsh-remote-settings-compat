@@ -11,7 +11,7 @@ const MAX_BODY_BYTES = 16 * 1024
 
 interface WebServerLike {
   host: string
-  port: number
+  port: number | undefined
   register(route: {
     kind: 'prefix'
     path: string

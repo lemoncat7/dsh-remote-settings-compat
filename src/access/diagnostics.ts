@@ -6,7 +6,7 @@ export const DIAGNOSTICS_PREFIX = '/api/remote-access-diagnostics/v1'
 
 interface WebServerLike {
   host: string
-  port: number
+  port: number | undefined
   register(route: {
     kind: 'prefix'
     path: string

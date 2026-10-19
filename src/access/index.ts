@@ -25,7 +25,8 @@ interface RuntimeContext extends Context {
   remoteSettingsTrust: RemoteSettingsTrust
   webServer: {
     host: string
-    port: number
+    port: number | undefined
+    getOrigin(): string
     register(route: {
       kind: 'prefix'
       path: string
@@ -59,7 +60,7 @@ export function apply(context: Context, base: Config): void {
   }, credentialSessionPersistence(ctx.credentials))
   const limiter = new LoginLimiter(config.maxFailedAttempts, config.lockoutMinutes * 60_000)
   const assertion = new ProxyAssertion()
-  const gateway = new AccessGateway(config, ctx.webServer.port, passwords, sessions, limiter, assertion, ctx.connection, ctx.logger)
+  const gateway = new AccessGateway(config, () => ctx.webServer.getOrigin(), passwords, sessions, limiter, assertion, ctx.connection, ctx.logger)
   const setupToken = createSetupToken()
 
   ctx.effect(

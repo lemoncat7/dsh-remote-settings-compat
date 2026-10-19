@@ -1,35 +1,12 @@
-import type { Context } from '@deepseek-ai/cordis'
-import { apply as applyConnection } from '@deepseek-ai/dsh-client-connection'
-import type { RemoteSettingsTrust } from './index.js'
-
-export const name = 'dsh-remote-settings-connection'
-export const inject = ['credentials', 'webServer', 'webRuntime', 'remoteSettingsTrust']
-
-interface ConnectionRuntimeContext {
-  webRuntime: { trustedHosts: readonly string[] }
-  remoteSettingsTrust: RemoteSettingsTrust
-}
-
-/**
- * Recreate DSH's official Connection with deployment hosts and the authorities
- * derived from trustedOrigins. The same array is updated in place so settings
- * changes do not require replacing the HTTP route.
- */
-export async function apply(ctx: Context): Promise<void> {
-  const runtime = ctx as unknown as ConnectionRuntimeContext
-  const trustedHosts: string[] = []
-  const refresh = (): void => {
-    const merged = new Set([
-      ...runtime.webRuntime.trustedHosts,
-      ...runtime.remoteSettingsTrust.authorities,
-    ])
-    trustedHosts.splice(0, trustedHosts.length, ...merged)
+/** Re-evaluate the native entry through Cordis without editing or persisting
+ * its policy. A remount also refreshes the cached remote-access flag. */
+export function refreshNativeConnection(loader: unknown): void {
+  const tree = loader as { entries?: () => Iterable<{
+    options: { id: string; name: string; config?: unknown }
+    fiber?: { update(config: unknown, force?: boolean): void }
+  }> } | undefined
+  for (const entry of tree?.entries?.() ?? []) {
+    if (entry.options.id !== 'connection' || entry.options.name !== '@deepseek-ai/dsh-client-connection') continue
+    entry.fiber?.update(entry.options.config, true)
   }
-
-  refresh()
-  await applyConnection(ctx, { trustedHosts })
-  ctx.effect(
-    () => runtime.remoteSettingsTrust.subscribe(refresh),
-    'remote-settings-compat: synchronize Connection authorities',
-  )
 }
