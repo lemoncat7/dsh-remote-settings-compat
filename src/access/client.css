@@ -125,6 +125,13 @@
   background: var(--gate-surface-raised);
 }
 
+.dsh-account-login p { margin: 0; line-height: 1.6; }
+.dsh-account-login-steps { display: grid; gap: 8px; color: var(--gate-text-secondary); }
+.dsh-account-login-steps a { color: var(--gate-text); text-decoration: underline; text-underline-offset: 3px; }
+.dsh-account-login code { overflow-wrap: anywhere; font-size: 12px; }
+.dsh-account-login form { display: grid; gap: 12px; min-width: 0; }
+.dsh-account-login :is(button, a):focus-visible { outline: 2px solid var(--gate-focus); outline-offset: 3px; }
+
 .dsh-access-gate-diagnostics {
   gap: 10px !important;
   padding: 12px !important;

@@ -12,6 +12,8 @@ import { LoginLimiter, ProxyAssertion } from './security.js'
 import { SessionStore } from './sessions.js'
 import { credentialSessionPersistence } from './session-persistence.js'
 import { accessRuntimeConfig } from './runtime-config.js'
+import { AccountLoginBridge, type AccountPort } from '../account-login/bridge.js'
+import { accountLoginHandler, ACCOUNT_LOGIN_PREFIX } from '../account-login/http.js'
 
 export const Config = ConfigSchema.volatile()
 export type Config = Volatile<AccessGateConfig>
@@ -62,6 +64,14 @@ export function apply(context: Context, base: Config): void {
   const assertion = new ProxyAssertion()
   const gateway = new AccessGateway(config, () => ctx.webServer.getOrigin(), passwords, sessions, limiter, assertion, ctx.connection, ctx.logger)
   const setupToken = createSetupToken()
+
+  // Optional native capability: older hosts keep their existing remote settings.
+  ctx.inject(['deepseekAccount'], scope => {
+    const bridge = new AccountLoginBridge(scope.get('deepseekAccount') as AccountPort, () => ctx.webServer.getOrigin())
+    scope.effect(() => ctx.webServer.register({ kind: 'prefix', path: ACCOUNT_LOGIN_PREFIX,
+      handler: accountLoginHandler(bridge, config, assertion) }), 'remote-account: authenticated callback adapter')
+    scope.effect(() => () => bridge.close(), 'remote-account: attempt cleanup')
+  })
 
   ctx.effect(
     () => registerAdminApi({

@@ -4,6 +4,7 @@ import { settingsSurfaceCss } from '../settings-surface.js'
 import type { Config } from './config.js'
 import type { RemoteSettingsValue } from '../client-settings.js'
 import { REMOTE_SETTINGS_NAMESPACE } from '../shared.js'
+import { AccountLoginCard } from '../account-login/client.js'
 import type { ConfigForm, ConfigForms } from '@deepseek-ai/dsh-client-ui-settings/client'
 
 const PLUGIN_ID = '@lemoncat7/dsh-remote-settings-compat'
@@ -207,6 +208,8 @@ function RemoteAccessCard({ gateScope, remoteScope }: { gateScope: SettingsScope
     </button>
     {open && <div className="dsh-access-gate-body">
       <div className="dsh-access-gate-warning"><strong>部署边界</strong><span>对外反向代理应指向门禁端口；DSH 原端口必须只允许可信主机访问，否则可以绕过密码。</span></div>
+
+      <AccountLoginCard enabled={status?.viaGateway === true} />
 
       <DeploymentDiagnostics status={status} diagnostics={diagnostics} issues={diagnosticIssues} loading={loadingStatus} onReload={() => { void reloadStatus() }} />
 
