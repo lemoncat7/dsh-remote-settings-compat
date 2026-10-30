@@ -1,12 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
+import { createRequire } from 'node:module'
 import { AccountLoginBridge, callbackPath } from '../lib/account-login/bridge.js'
 import { accountLoginHandler, ACCOUNT_LOGIN_PREFIX } from '../lib/account-login/http.js'
 import { ProxyAssertion } from '../lib/access/security.js'
 import { resolveConfig } from '../lib/access/config.js'
 
-const client = { version: '0.2.1-rc.2', locale: 'zh-CN', timezoneOffsetSeconds: 28800 }
+const runtimeVersion = createRequire(import.meta.url)('@deepseek-ai/dsh-client-connection/package.json').version
+const client = { version: runtimeVersion, locale: 'zh-CN', timezoneOffsetSeconds: 28800 }
 const origin = 'http://127.0.0.1:3080'
 const address = `${origin}/oauth/callback?code=one-time-code&state=expected-state`
 function fixture(deliver) {
@@ -159,7 +161,8 @@ test('HTTP enforces signed gateway, exact Origin, mutation header, JSON and brow
   assert.equal((await request('start',{locale:'zh-CN',timezoneOffsetSeconds:'bad'})).status,400)
   assert.equal((await request('callback',{address})).status,409)
   assert.equal((await request('start',{big:'x'.repeat(13000)})).status,413)
-  const started = await request('start',client)
+  // Browser-supplied versions must not override the actual host version.
+  const started = await request('start',{...client,version:'untrusted-browser-version'})
   assert.equal(started.status,200)
   assert.match(started.headers.get('set-cookie'),/^__Host-dsh_account_bridge=.*; Path=\/; HttpOnly; SameSite=Strict; Secure$/)
   const cookie = started.headers.get('set-cookie').split(';')[0]
