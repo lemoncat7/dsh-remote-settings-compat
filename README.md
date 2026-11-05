@@ -47,3 +47,8 @@ DSH 0.2.1-rc.2 的官方账号登录仅接受本机 HTTP 回调地址，不能�
 - [部署、Nginx、迁移与配置](docs/usage.md)
 - [版本与发布说明](https://github.com/lemoncat7/dsh-remote-settings-compat/releases)
 - [发布维护约定](docs/releases/README.md)
+
+
+## DSH 0.2.2-rc.1
+
+0.6.7 支持 DSH 0.2.2-rc.1，要求 Node.js >=24.9.0。[兼容说明](docs/compatibility-0.2.2-rc.1.md)。

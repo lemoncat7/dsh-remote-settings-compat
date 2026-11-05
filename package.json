@@ -1,6 +1,6 @@
 {
   "name": "@lemoncat7/dsh-remote-settings-compat",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Unified trusted settings and password access gateway for DeepSeek Harness",
   "homepage": "https://github.com/lemoncat7/dsh-remote-settings-compat#readme",
   "bugs": {
@@ -51,7 +51,8 @@
     "docs/dsh-020-compatibility.md",
     "docs/dsh-021-compatibility.md",
     "docs/releases/0.6.4.md",
-    "docs/releases/0.6.5.md"
+    "docs/releases/0.6.5.md",
+    "docs/compatibility-0.2.2-rc.1.md"
   ],
   "dsh": {
     "bundle": {
@@ -66,8 +67,8 @@
     }
   },
   "engines": {
-    "node": "^22.19.0 || >=24.0.0",
-    "dsh": ">=0.2.1-rc.2 <0.2.2-0"
+    "node": ">=24.9.0",
+    "dsh": "=0.2.2-rc.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/build-client.mjs",
@@ -80,18 +81,18 @@
     "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
     "@deepseek-ai/dsh-credentials": "0.2.1-rc.2",
     "@deepseek-ai/dsh-settings": "0.2.1-rc.2",
-    "@deepseek-ai/schemastery": "~3.18.5",
+    "@deepseek-ai/schemastery": "~3.19.0",
     "http-proxy": "^1.18.1"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/cordis": "^4.1.0",
     "@types/http-proxy": "^1.17.16",
     "react": "^18.3.1"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "~4.0.5",
-    "@deepseek-ai/dsh-app-boot": "^0.2.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "0.2.1-rc.2",
+    "@deepseek-ai/cordis": "~4.1.0",
+    "@deepseek-ai/dsh-app-boot": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
     "@types/http-proxy": "^1.17.16",
     "@types/node": "^24.0.0",
     "@types/react": "^18.3.0",
