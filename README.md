@@ -14,7 +14,7 @@ DeepSeek Harness 的远程访问插件，将可信浏览器来源配置和独立
 
 ## 安装
 
-最低支持 DeepSeek Harness **0.2.1-rc.2**，已通过 **0.2.1-rc.5** 构建与回归测试（宿主仍为 RC），需要 Node.js **^22.19.0 或 >=24.0.0**。其他宿主版本请先查阅[兼容说明](docs/dsh-021-compatibility.md)和对应版本的发布说明。
+当前版本 **0.6.8**，支持 DeepSeek Harness **0.2.2-rc.1 / 0.2.2-rc.2**，需要 Node.js **>=24.9.0**。rc2 隔离验证结果见[兼容说明](docs/compatibility-0.2.2-rc.2.md)。本版制品包含上述兼容声明。
 
 ```bash
 dsh plugin --profile web add @lemoncat7/dsh-remote-settings-compat@latest
@@ -49,6 +49,6 @@ DSH 0.2.1-rc.2 的官方账号登录仅接受本机 HTTP 回调地址，不能�
 - [发布维护约定](docs/releases/README.md)
 
 
-## DSH 0.2.2-rc.1
+## DSH 0.2.2 兼容性
 
-0.6.7 支持 DSH 0.2.2-rc.1，要求 Node.js >=24.9.0。[兼容说明](docs/compatibility-0.2.2-rc.1.md)。
+当前版本 **0.6.8**，支持 DeepSeek Harness **0.2.2-rc.1 / 0.2.2-rc.2**，需要 Node.js **>=24.9.0**。rc2 隔离验证结果见[兼容说明](docs/compatibility-0.2.2-rc.2.md)。本版制品包含上述兼容声明。
