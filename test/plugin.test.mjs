@@ -85,9 +85,12 @@ test('bundle augments native connection policy without attempting to rename its 
   assert.equal(pkg.exports['./access'].default, './lib/access/index.js')
   assert.equal(pkg.dsh.client.immediately, true)
   assert.deepEqual(pkg.dsh.client.inject, ['@deepseek-ai/dsh-client-connection'])
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-client-connection'], '0.2.1-rc.2')
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-settings'], '0.2.1-rc.2')
-  assert.equal(pkg.dependencies['@deepseek-ai/dsh-credentials'], '0.2.1-rc.2')
+  assert.equal(Object.hasOwn(pkg.engines, 'dsh'), false)
+  for (const name of ['dsh-client-connection', 'dsh-settings', 'dsh-credentials']) {
+    assert.equal(pkg.dependencies[`@deepseek-ai/${name}`], undefined)
+    assert.equal(pkg.peerDependencies[`@deepseek-ai/${name}`], '*')
+    assert.ok(pkg.devDependencies[`@deepseek-ai/${name}`])
+  }
   assert.equal(pkg.dependencies['http-proxy'], '^1.18.1')
   assert.equal(pkg.dependencies['@lemoncat7/dsh-access-gate'], undefined)
 })
